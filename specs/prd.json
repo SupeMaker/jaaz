@@ -1,0 +1,127 @@
+{
+  "project": "Jaaz",
+  "branchName": "ralph/edit-display-and-mockup",
+  "description": "Fix direct-edit image display on canvas and add Lovart-style Mockup sticker/paste feature",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Return generated image data from direct_edit and inpaint endpoints",
+      "description": "As a developer, I need the backend to return the generated image element/file/url so the frontend can render it without relying solely on websocket broadcasts.",
+      "acceptanceCriteria": [
+        "direct_edit returns element, file, and image_url in the response",
+        "inpaint returns element, file, and image_url in the response",
+        "Duplicate websocket image_generated broadcasts are avoided for direct-edit paths",
+        "Normal chat-generated images still broadcast via websocket",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Added generate_image_with_provider_ex and broadcast flag on save_image_to_canvas."
+    },
+    {
+      "id": "US-002",
+      "title": "Render direct-edit and inpaint results on the canvas",
+      "description": "As a user, I want edited images to appear on the canvas immediately after the operation succeeds.",
+      "acceptanceCriteria": [
+        "CanvasEditHandler emits Canvas::ImageAdded with returned image data on success",
+        "InpaintDialog emits Canvas::ImageAdded with returned image data on success",
+        "CanvasExcali listens for Canvas::ImageAdded and adds the image to Excalidraw",
+        "No duplicate images appear when websocket event also arrives",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Added Canvas::ImageAdded event and wired it through CanvasEditHandler, InpaintDialog, and CanvasExcali."
+    },
+    {
+      "id": "US-003",
+      "title": "Backend Mockup compositing endpoint",
+      "description": "As a user, I want to paste a logo/design onto a target image so it looks like a real sticker or product mockup.",
+      "acceptanceCriteria": [
+        "New POST /api/mockup endpoint accepts target_file_id, design_file_id, and transform options",
+        "Server composites design onto target using PIL with support for scale, rotate, opacity, shadow, and corner radius",
+        "Result is saved to canvas and returned as element/file/image_url",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Implemented /api/mockup with PIL compositing in direct_edit_router.py."
+    },
+    {
+      "id": "US-004",
+      "title": "Frontend Mockup dialog and Popbar integration",
+      "description": "As a user, I want a Mockup button in the Popbar that opens a dialog to position and paste my design.",
+      "acceptanceCriteria": [
+        "Mockup button added to PopbarActions",
+        "MockupDialog lets user pick a design image from canvas or upload",
+        "MockupDialog provides preview and adjustable transform parameters",
+        "On apply, call /api/mockup and emit Canvas::ImageAdded with the result",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Added MockupDialog, mockup API client, and integrated into PopbarActions."
+    },
+    {
+      "id": "US-005",
+      "title": "i18n translations and final polish",
+      "description": "As a user, I want all new UI labels to be available in Chinese and English.",
+      "acceptanceCriteria": [
+        "Chinese and English translations added for Mockup and edit-display labels",
+        "Generated image is focused/selected after being added to canvas",
+        "All existing direct-edit actions still work",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Added zh-CN/en translations for inpaint and mockup; new images are auto-selected."
+    },
+    {
+      "id": "US-006",
+      "title": "Inline selection editor with top-left task status",
+      "description": "As a user, I want to draw the edit selection directly on the original image and see task status in the top-left instead of bottom toasts.",
+      "acceptanceCriteria": [
+        "Clicking Edit Element/Text opens a small prompt popup above the image",
+        "Selection rectangle is drawn on the original image with first click as top-left anchor",
+        "A top-left CanvasTaskStatus panel shows running/success/error states for edit/inpaint/mockup tasks",
+        "CanvasEditHandler, CanvasInpaintEditor, and MockupDialog emit task events instead of bottom toasts",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Replaced InpaintDialog with CanvasInpaintEditor portal overlay; added CanvasTaskStatus and task event bus."
+    },
+    {
+      "id": "US-007",
+      "title": "Chat panel show/hide toggle",
+      "description": "As a user, I want to collapse the right-side chat panel to give the canvas more space.",
+      "acceptanceCriteria": [
+        "Chat header has a hide button",
+        "Hidden state shows a floating Show Chat button on the canvas",
+        "Resizable panel adapts to collapsed/expanded state",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Added chatVisible state in canvas route and toggle button in Chat header."
+    },
+    {
+      "id": "US-008",
+      "title": "Mockup image fusion instead of simple overlay",
+      "description": "As a user, I want pasted logos/designs to blend with the target surface so they look painted/printed rather than layered on top.",
+      "acceptanceCriteria": [
+        "Backend fuses design with target patch using color matching and blend modes",
+        "Auto blend mode picks appropriate mode based on target luminance and design contrast",
+        "Supports overlay, multiply, screen, soft_light, hard_light, color_dodge, color_burn, vivid_light, normal",
+        "Transparency of design is respected and target shows through empty areas",
+        "Python syntax check passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Implemented _fuse_design in direct_edit_router.py using numpy color transfer and blend modes."
+    }
+  ]
+}

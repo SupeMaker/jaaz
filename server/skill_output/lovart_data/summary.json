@@ -1,0 +1,81 @@
+{
+  "name": "lovart",
+  "total_pages": 18,
+  "base_url": "https://www.lovart.ai/zh/docs",
+  "llms_txt_detected": true,
+  "llms_txt_variant": null,
+  "pages": [
+    {
+      "title": "How Lovart Works",
+      "url": "https://www.lovart.ai/zh/docs"
+    },
+    {
+      "title": "How Lovart Works",
+      "url": "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works"
+    },
+    {
+      "title": "Things You Should Set Up First",
+      "url": "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first"
+    },
+    {
+      "title": "Design Your First Project",
+      "url": "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project"
+    },
+    {
+      "title": "Adding References",
+      "url": "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references"
+    },
+    {
+      "title": "Selecting AI Models",
+      "url": "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models"
+    },
+    {
+      "title": "Chat Tools",
+      "url": "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools"
+    },
+    {
+      "title": "Agent Skills",
+      "url": "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills"
+    },
+    {
+      "title": "Other Things You Can Prompt to Create",
+      "url": "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create"
+    },
+    {
+      "title": "Basic Editing",
+      "url": "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing"
+    },
+    {
+      "title": "Basic AI Editing",
+      "url": "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing"
+    },
+    {
+      "title": "Advanced AI Editing",
+      "url": "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing"
+    },
+    {
+      "title": "AI Transformation",
+      "url": "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation"
+    },
+    {
+      "title": "Canvas Objects",
+      "url": "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects"
+    },
+    {
+      "title": "Customize Your Canvas",
+      "url": "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas"
+    },
+    {
+      "title": "Export Formats",
+      "url": "https://www.lovart.ai/zh/docs/export-your-assets/export-formats"
+    },
+    {
+      "title": "Models & Pricing",
+      "url": "https://www.lovart.ai/zh/docs/reference/models-and-pricing"
+    },
+    {
+      "title": "Keyboard Shortcuts",
+      "url": "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+    }
+  ]
+}

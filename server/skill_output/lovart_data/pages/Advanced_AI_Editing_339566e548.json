@@ -1,0 +1,53 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+  "title": "Advanced AI Editing",
+  "content": "Quick Edit provides fast access to common editing tasks. Pick a frequently used adjustment from the panel, or prompt for a custom edit.\n\nShortcut: M or Cmd/Ctrl+Click\n\nTouch Edit lets you mark an element in an image and describe a precise edit in natural language. Lovart identifies the element and applies the edit.\n\nEdit Elements breaks your image into individual layers, so you can reposition, resize, and adjust subjects, backgrounds, and text independently. Use it when you want to manually rearrange the composition.\n\nEdit Text lets you modify text within an image while preserving the original font and visual style. Use it when you only need to change the words, for example swapping a headline on an AI-generated poster or correcting a typo on a product label.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Advanced AI Editing",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Quick Edit",
+      "id": "1a22fc7995d3"
+    },
+    {
+      "level": "h3",
+      "text": "Mark / Touch Edit",
+      "id": "6ae82b6e027d"
+    },
+    {
+      "level": "h3",
+      "text": "Edit Elements",
+      "id": "a325d3865db9"
+    },
+    {
+      "level": "h3",
+      "text": "Edit Text",
+      "id": "b26a423b73fd"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

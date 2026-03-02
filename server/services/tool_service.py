@@ -9,6 +9,12 @@ from tools.generate_image_by_imagen_4_jaaz import generate_image_by_imagen_4_jaa
 from tools.generate_image_by_imagen_4_replicate import (
     generate_image_by_imagen_4_replicate,
 )
+from tools.generate_image_by_agnes_text_to_image import (
+    generate_image_by_agnes_text_to_image,
+)
+from tools.generate_image_by_agnes_image_to_image import (
+    generate_image_by_agnes_image_to_image,
+)
 from tools.generate_image_by_ideogram3_bal_jaaz import (
     generate_image_by_ideogram3_bal_jaaz,
 )
@@ -114,6 +120,18 @@ TOOL_MAPPING: Dict[str, ToolInfo] = {
         "type": "image",
         "provider": "volces",
         "tool_function": generate_image_by_doubao_seedream_3_volces,
+    },
+    "generate_image_by_agnes_text_to_image": {
+        "display_name": "Agnes Image 2.0 Flash (Text-to-Image)",
+        "type": "image",
+        "provider": "agnes",
+        "tool_function": generate_image_by_agnes_text_to_image,
+    },
+    "generate_image_by_agnes_image_to_image": {
+        "display_name": "Agnes Image 2.0 Flash (Image-to-Image)",
+        "type": "image",
+        "provider": "agnes",
+        "tool_function": generate_image_by_agnes_image_to_image,
     },
     "edit_image_by_doubao_seededit_3_volces": {
         "display_name": "Doubao Seededit 3 by volces",

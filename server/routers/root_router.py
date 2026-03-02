@@ -10,7 +10,7 @@ from utils.http_client import HttpClient
 # services
 from models.config_model import ModelInfo
 from typing import List
-from services.tool_service import TOOL_MAPPING
+from typing import Dict, Any, Literal
 
 router = APIRouter(prefix="/api")
 
@@ -53,19 +53,21 @@ async def get_models() -> list[ModelInfo]:
     config = config_service.get_config()
     res: List[ModelInfo] = []
 
-    # Handle Ollama models separately
-    ollama_url = config.get('ollama', {}).get(
-        'url', os.getenv('OLLAMA_HOST', 'http://localhost:11434'))
-    # Add Ollama models if URL is available
-    if ollama_url and ollama_url.strip():
-        ollama_models = get_ollama_model_list()
-        for ollama_model in ollama_models:
-            res.append({
-                'provider': 'ollama',
-                'model': ollama_model,
-                'url': ollama_url,
-                'type': 'text'
-            })
+    # Handle Ollama models separately only when enabled in config
+    ollama_cfg = config.get('ollama', {})
+    if not ollama_cfg.get('is_disabled'):
+        ollama_url = ollama_cfg.get(
+            'url', os.getenv('OLLAMA_HOST', 'http://localhost:11434'))
+        # Add Ollama models if URL is available
+        if ollama_url and ollama_url.strip():
+            ollama_models = get_ollama_model_list()
+            for ollama_model in ollama_models:
+                res.append({
+                    'provider': 'ollama',
+                    'model': ollama_model,
+                    'url': ollama_url,
+                    'type': 'text'
+                })
 
     for provider in config.keys():
         if provider in ['ollama']:
@@ -83,14 +85,19 @@ async def get_models() -> list[ModelInfo]:
         for model_name in models:
             model = models[model_name]
             model_type = model.get('type', 'text')
-            # Only return text models
-            if model_type == 'text':
-                res.append({
-                    'provider': provider,
-                    'model': model_name,
-                    'url': provider_url,
-                    'type': model_type
-                })
+            if isinstance(model_type, list):
+                model_type_value: List[Literal['text', 'image', 'video']] = [
+                    t for t in model_type if t in ('text', 'image', 'video')
+                ]
+            else:
+                model_type_value: List[Literal['text', 'image', 'video']] = [model_type]
+
+            res.append({
+                'provider': provider,
+                'model': model_name,
+                'url': provider_url,
+                'type': model_type_value if len(model_type_value) > 1 else model_type_value[0]
+            })
     return res
 
 
@@ -102,7 +109,7 @@ async def list_tools() -> list[ToolInfoJson]:
         if tool_info.get('provider') == 'system':
             continue
         provider = tool_info['provider']
-        provider_api_key = config[provider].get('api_key', '').strip()
+        provider_api_key = config.get(provider, {}).get('api_key', '').strip()
         if provider != 'comfyui' and not provider_api_key:
             continue
         res.append({
@@ -131,8 +138,8 @@ async def list_tools() -> list[ToolInfoJson]:
 
 
 @router.get("/list_chat_sessions")
-async def list_chat_sessions():
-    return await db_service.list_sessions()
+async def list_chat_sessions(canvas_id: str)  -> List[Dict[str, Any]]:
+    return await db_service.list_sessions(canvas_id)
 
 
 @router.get("/chat_session/{session_id}")

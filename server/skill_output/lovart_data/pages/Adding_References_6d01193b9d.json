@@ -1,0 +1,48 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+  "title": "Adding References",
+  "content": "Import images, videos, and PDFs into a Lovart conversation to use as references for your task. Upload Files feeds assets into the Agent's conversational context. To place assets directly onto the Canvas for visual manipulation, use Add to Canvas instead.\n\nMethod 1: Click the Upload Button\n\nMethod 2: Drag and Drop\n\nThe Assets Library stores character, audio, and video assets so you can reuse them across generations and projects.\n\nA Brand Kit is a set of a brand's visual identity, stored globally, that the Agent can follow when performing design tasks. Configure a kit once, then reuse it across tasks, sessions, and projects to generate on-brand assets. You can create a separate Brand Kit for each brand you work on.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Adding References",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Upload Files",
+      "id": "c2157e7fb209"
+    },
+    {
+      "level": "h3",
+      "text": "Assets Library",
+      "id": "1b2c6fd301e6"
+    },
+    {
+      "level": "h3",
+      "text": "Brand Kit",
+      "id": "828020ecba5b"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

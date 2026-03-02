@@ -44,7 +44,90 @@
   },
   "popbar": {
     "addToChat": "Add to chat",
-    "magicGenerate": "✨ Magic Generate"
+    "magicGenerate": "✨ Magic Generate",
+    "upscale": "Upscale",
+    "removeBg": "Remove BG",
+    "editElement": "Edit Element",
+    "editText": "Edit Text",
+    "expand": "Expand",
+    "redraw": "Redraw",
+    "mockup": "Mockup",
+    "download": "Download"
+  },
+  "edit": {
+    "noImageSelected": "Please select an image first",
+    "processing": "{{action}} processing...",
+    "completed": "{{action}} completed",
+    "failed": "{{action}} failed",
+    "failedWithError": "{{action}} failed: {{error}}",
+    "downloadFailed": "Download failed: {{error}}"
+  },
+  "chat": {
+    "chat": "Chat",
+    "hideChat": "Hide chat",
+    "showChat": "Show chat"
+  },
+  "inpaint": {
+    "title": "Touch Edit",
+    "touchMode": "Touch Select",
+    "dragMode": "Drag Select",
+    "clearSelection": "Clear",
+    "touchInstructions": "Click an element in the image to select it. Drag the selection to reposition. Then describe the edit.",
+    "dragInstructions": "Drag to draw a selection on the image. Then describe the edit.",
+    "regionSelected": "Region selected",
+    "dragToSelect": "Drag on the image to select a region",
+    "noSelection": "No region selected — whole image will be edited",
+    "dragToMove": "Drag to move",
+    "editPrompt": "Edit Instructions",
+    "placeholder": "e.g., change the cat to a dog, add a hat, remove the object...",
+    "elementPlaceholder": "e.g., change the cat to a dog, add a hat, remove the object...",
+    "textPlaceholder": "e.g., replace text with \"Hello World\", change font color to red...",
+    "apply": "Apply Edit",
+    "processing": "Processing...",
+    "completed": "Inpaint completed",
+    "failed": "Inpaint failed",
+    "failedWithError": "Inpaint failed: {{error}}",
+    "hint": "Ctrl+Enter to submit"
+  },
+  "mockup": {
+    "title": "Mockup / Sticker",
+    "designImage": "Design Image",
+    "selectDesign": "Select a design image",
+    "noDesignImages": "No other images on the canvas. Add a logo or sticker first.",
+    "positionX": "Position X",
+    "positionY": "Position Y",
+    "scale": "Scale",
+    "rotate": "Rotate",
+    "opacity": "Opacity",
+    "cornerRadius": "Corner Radius",
+    "shadow": "Shadow",
+    "apply": "Apply Mockup",
+    "processing": "Processing...",
+    "completed": "Mockup completed",
+    "failed": "Mockup failed",
+    "failedWithError": "Mockup failed: {{error}}",
+    "hint": "Adjust placement and apply",
+    "noDesign": "Please select a design image"
+  },
+  "workMode": {
+    "talkDesc": "Describe your design needs in natural language",
+    "tabDesc": "Click to select and edit canvas elements",
+    "tuneDesc": "Iteratively refine selected design elements"
+  },
+  "smartLayers": {
+    "title": "Smart Layers",
+    "empty": "No layers detected. Generate an image to auto-extract layers.",
+    "hint": "Click layer to edit. Toggle visibility to isolate."
+  },
+  "campaignSuite": {
+    "title": "Campaign Suite",
+    "subtitle": "Auto-extend to every touchpoint",
+    "generateAll": "Generate All",
+    "hint": "Click a platform to generate adapted creative. Brand colors and fonts will be applied automatically."
+  },
+  "history": {
+    "title": "History Snapshots",
+    "empty": "No snapshots yet. Each generation creates a restorable snapshot."
   },
   "myAssets": "My Assets",
   "selectAFolder": "Select a folder",

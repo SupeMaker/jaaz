@@ -3,13 +3,18 @@ import os
 import traceback
 import aiofiles
 import toml
-from typing import Dict, TypedDict, Literal, Optional
+from typing import Dict, TypedDict, Literal, Optional, Union, List
 
 # 定义配置文件的类型结构
 
 
 class ModelConfig(TypedDict, total=False):
-    type: Literal["text", "image", "video"]
+    type: Union[
+        Literal["text"],
+        Literal["image"],
+        Literal["video"],
+        List[Literal["text", "image", "video"]],
+    ]
     is_custom: Optional[bool]
     is_disabled: Optional[bool]
 
@@ -59,6 +64,14 @@ DEFAULT_PROVIDERS_CONFIG: AppConfig = {
         'api_key': '',
         'max_tokens': 8192,
     },
+    'agnes': {
+        'models': {
+            'agnes-image-2.0-flash': {'type': 'image'},
+            'agnes-image-2.1-flash': {'type': 'image'},
+        },
+        'url': 'https://apihub.agnes-ai.com',
+        'api_key': 'sk-kgDAe1eLA7QzLTC8BLfHBADjpMEtTMvJqbG2aZpkhXRR6XwB',
+    },
 
 }
 
@@ -74,11 +87,10 @@ IMAGE_FORMATS = (
     ".png",
     ".jpg",
     ".jpeg",
-    ".webp",  # 基础格式
+    ".webp",
     ".bmp",
     ".tiff",
-    ".tif",  # 其他常见格式
-    ".webp",
+    ".tif",
 )
 VIDEO_FORMATS = (
     ".mp4",
@@ -129,8 +141,13 @@ class ConfigService:
                 provider_models = DEFAULT_PROVIDERS_CONFIG.get(
                     provider, {}).get('models', {})
                 for model_name, model_config in provider_config.get('models', {}).items():
+                    model_type = model_config.get('type', 'text')
+                    is_text_model = (
+                        model_type == 'text'
+                        or (isinstance(model_type, list) and 'text' in model_type)
+                    )
                     # Only text model can be self added
-                    if model_config.get('type') == 'text' and model_name not in provider_models:
+                    if is_text_model and model_name not in provider_models:
                         provider_models[model_name] = model_config
                         provider_models[model_name]['is_custom'] = True
                 self.app_config[provider]['models'] = provider_models

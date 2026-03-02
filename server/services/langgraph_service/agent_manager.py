@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
 from langgraph.prebuilt import create_react_agent  # type: ignore
-from langgraph.graph.graph import CompiledGraph
+from langgraph.pregel import Pregel  # type: ignore
 from langchain_core.tools import BaseTool
 from models.tool_model import ToolInfoJson
 from services.langgraph_service.configs.image_vide_creator_config import ImageVideoCreatorAgentConfig
@@ -19,7 +19,7 @@ class AgentManager:
         model: Any,
         tool_list: List[ToolInfoJson],
         system_prompt: str = ""
-    ) -> List[CompiledGraph]:
+    ) -> List[Pregel]:
         """创建所有智能体
 
         Args:
@@ -63,7 +63,7 @@ class AgentManager:
     def _create_langgraph_agent(
         model: Any,
         config: BaseAgentConfig
-    ) -> CompiledGraph:
+    ) -> Pregel:
         """根据配置创建单个 LangGraph 智能体
 
         Args:
@@ -86,9 +86,26 @@ class AgentManager:
         # 获取业务工具
         business_tools: List[BaseTool] = []
         for tool_json in config.tools:
-            tool = tool_service.get_tool(tool_json['id'])
+            # tool_json may come from two sources:
+            # 1) a registered tool entry (id is the tool id, e.g. generate_image_by_agnes_text_to_image)
+            # 2) a model configured in settings (id is the model name, e.g. agnes-image-2.0-flash)
+            tool = tool_service.get_tool(tool_json.get('id'))
             if tool:
                 business_tools.append(tool)
+                continue
+
+            # Fallback: try to resolve by provider+type mapping when a settings-model was selected
+            provider = tool_json.get('provider')
+            ttype = tool_json.get('type')
+            if provider:
+                # find first registered tool that matches provider and type
+                for reg_tool_id, reg_tool_info in tool_service.tools.items():
+                    if reg_tool_info.get('provider') == provider and (not ttype or reg_tool_info.get('type') == ttype):
+                        resolved = tool_service.get_tool(reg_tool_id)
+                        if resolved:
+                            print(f"🔁 Resolved settings-model {tool_json.get('id')} to registered tool {reg_tool_id}")
+                            business_tools.append(resolved)
+                            break
 
         # 创建并返回 LangGraph 智能体
         return create_react_agent(

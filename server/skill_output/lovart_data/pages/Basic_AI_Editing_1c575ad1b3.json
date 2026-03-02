@@ -1,0 +1,53 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+  "title": "Basic AI Editing",
+  "content": "Upscale boosts the resolution of an image to 2K, 4K, or 8K. Use it to prepare assets for print, large displays, or high-resolution exports.\n\nRemove BG detects the main subject in an image and replaces the background with transparency. Useful for clean product shots, isolating subjects, or preparing overlays.\n\nEraser removes unwanted objects, people, text, or watermarks from an image and fills the gap with AI-generated content that matches the surrounding scene.\n\nExpand extends an image beyond its current bounds and fills the new area with AI-generated content that coherently completes the scene. Use it for outpainting, aspect ratio changes, extra breathing room, and adapting designs to different formats.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Basic AI Editing",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Upscale",
+      "id": "5939657f2e1f"
+    },
+    {
+      "level": "h3",
+      "text": "Remove Background",
+      "id": "31d1b4d59068"
+    },
+    {
+      "level": "h3",
+      "text": "Eraser",
+      "id": "54cec6ab98d0"
+    },
+    {
+      "level": "h3",
+      "text": "Expand",
+      "id": "d317ecf668fc"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

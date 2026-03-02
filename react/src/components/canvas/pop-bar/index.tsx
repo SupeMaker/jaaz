@@ -105,7 +105,7 @@ const CanvasPopbarWrapper = () => {
   })
 
   return (
-    <div className='absolute left-0 bottom-0 w-full h-full z-20 pointer-events-none'>
+    <div id='canvas-popbar-wrapper' className='absolute left-0 bottom-0 w-full h-full z-20 pointer-events-none'>
       <AnimatePresence>
         {pos && (showAddToChat || showMagicGenerate) && (
           <CanvasPopbarContainer

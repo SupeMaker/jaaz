@@ -9,10 +9,8 @@ from PIL import Image
 
 from nanoid import generate
 from mimetypes import guess_type
-# import httpx
 import mimetypes
 from pymediainfo import MediaInfo
-from PIL import Image
 
 
 from services.config_service import FILES_DIR
@@ -38,11 +36,15 @@ async def get_video_info_and_save(
 
     try:
         media_info = MediaInfo.parse(temp_path)
+        width, height = 0, 0  # Default values in case no video track found
         for track in media_info.tracks:  # type: ignore
             if track.track_type == "Video":
                 width = track.width
                 height = track.height
                 print(f"Width: {width}, Height: {height}")
+
+        if width == 0 or height == 0:
+            raise ValueError(f"No video track found in {temp_path}")
 
         extension = "mp4"  # 默认使用 mp4，实际情况可以根据 codec_name 灵活判断
 

@@ -23,6 +23,7 @@ Settings Service - 设置服务模块
 import os
 import traceback
 import json
+from typing import Any
 
 # 用户数据目录路径，优先使用环境变量，否则使用默认路径
 USER_DATA_DIR = os.getenv("USER_DATA_DIR", os.path.join(
@@ -64,7 +65,7 @@ class SettingsService:
         self.settings_file = os.getenv(
             "SETTINGS_PATH", os.path.join(USER_DATA_DIR, "settings.json"))
 
-    async def exists_settings(self):
+    async def exists_settings(self) -> bool:
         """
         检查设置文件是否存在
 
@@ -76,7 +77,7 @@ class SettingsService:
         """
         return os.path.exists(self.settings_file)
 
-    def get_settings(self):
+    def get_settings(self) -> dict[str, Any]:
         """
         获取所有设置配置（用于 API 响应）
 
@@ -120,7 +121,7 @@ class SettingsService:
             traceback.print_exc()
             return DEFAULT_SETTINGS
 
-    def get_raw_settings(self):
+    def get_raw_settings(self) -> dict[str, Any]:
         """
         获取原始设置（内部使用，不掩码敏感信息）
 
@@ -160,7 +161,7 @@ class SettingsService:
             print(f"Error loading raw settings: {e}")
             return DEFAULT_SETTINGS
 
-    def get_proxy_config(self):
+    def get_proxy_config(self) -> str:
         """
         获取代理配置
 
@@ -173,7 +174,7 @@ class SettingsService:
         settings = self.get_raw_settings()
         return settings.get('proxy', '')
 
-    def get_enabled_knowledge_ids(self):
+    def get_enabled_knowledge_ids(self) -> list[str]:
         """
         获取启用的知识库ID列表
 
@@ -183,7 +184,7 @@ class SettingsService:
         settings = self.get_raw_settings()
         return settings.get('enabled_knowledge', [])
 
-    async def update_enabled_knowledge(self, knowledge_ids):
+    async def update_enabled_knowledge(self, knowledge_ids: list[str]) -> dict[str, str]:
         """
         更新启用的知识库列表
 
@@ -195,7 +196,7 @@ class SettingsService:
         """
         return await self.update_settings({"enabled_knowledge": knowledge_ids})
 
-    def get_enabled_knowledge_data(self):
+    def get_enabled_knowledge_data(self) -> list[Any]:
         """
         获取启用的知识库完整数据列表
 
@@ -205,7 +206,7 @@ class SettingsService:
         settings = self.get_raw_settings()
         return settings.get('enabled_knowledge_data', [])
 
-    async def update_enabled_knowledge_data(self, knowledge_data_list):
+    async def update_enabled_knowledge_data(self, knowledge_data_list: list[Any]) -> dict[str, str]:
         """
         更新启用的知识库完整数据
 
@@ -223,7 +224,7 @@ class SettingsService:
             "enabled_knowledge_data": knowledge_data_list
         })
 
-    def create_default_settings(self):
+    def create_default_settings(self) -> None:
         """
         创建默认设置文件
 
@@ -243,7 +244,7 @@ class SettingsService:
         except Exception as e:
             print(f"Error creating default settings: {e}")
 
-    async def update_settings(self, data):
+    async def update_settings(self, data: dict[str, Any]) -> dict[str, str]:
         """
         更新设置配置
 

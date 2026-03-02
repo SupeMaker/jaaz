@@ -104,7 +104,27 @@
     "workflowDescription": "工作流描述，描述工作流的用途，功能作用，让大模型更好的调用",
     "workflowNameInvalid": "工作流名称只能允许字母、数字、下划线，以方便大模型动态调用"
   },
-  "saveSettings": "保存设置",
+  "brand": {
+    "title": "品牌设置",
+    "logo": "品牌 Logo",
+    "logoDescription": "上传品牌 Logo，后续生成将自动遵循品牌规范",
+    "colors": "品牌色板",
+    "colorsDescription": "添加品牌主色，约束生成结果的一致性",
+    "addColor": "添加颜色",
+    "fonts": "品牌字体",
+    "fontsDescription": "设置品牌首选字体",
+    "primaryFont": "首选字体",
+    "secondaryFont": "辅助字体",
+    "brandName": "品牌名称",
+    "brandNamePlaceholder": "输入品牌名称",
+    "uploadLogo": "上传 Logo",
+    "removeLogo": "移除 Logo",
+    "colorHex": "色值",
+    "colorName": "颜色名称",
+    "removeColor": "移除颜色",
+    "save": "保存品牌设置",
+    "saved": "品牌设置已保存"
+  },
   "close": "关闭",
   "cancel": "取消"
 }

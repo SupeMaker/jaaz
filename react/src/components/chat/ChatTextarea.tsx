@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import ModelSelectorV2 from './ModelSelectorV2'
 import ModelSelectorV3 from './ModelSelectorV3'
+import OutputModeSelector, { OutputMode } from './OutputModeSelector'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBalance } from '@/hooks/use-balance'
 import { BASE_API_URL } from '@/constants'
@@ -79,10 +80,13 @@ const ChatTextarea: React.FC<ChatTextareaProps> = ({
   >([])
   const [isFocused, setIsFocused] = useState(false)
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('auto')
+  const [customWidth, setCustomWidth] = useState<string>('')
+  const [customHeight, setCustomHeight] = useState<string>('')
   const [quantity, setQuantity] = useState<number>(1)
   const [showQuantitySlider, setShowQuantitySlider] = useState(false)
   const quantitySliderRef = useRef<HTMLDivElement>(null)
-  const MAX_QUANTITY = 30
+  const MAX_QUANTITY = 40
+  const [outputMode, setOutputMode] = useState<OutputMode>('image')
 
   const imageInputRef = useRef<HTMLInputElement>(null)
 
@@ -370,14 +374,14 @@ const ChatTextarea: React.FC<ChatTextareaProps> = ({
     <motion.div
       ref={dropAreaRef}
       className={cn(
-        'w-full flex flex-col items-center border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all duration-300 cursor-text gap-5 bg-background/80 backdrop-blur-xl relative',
-        isFocused && 'border-primary/40',
+        'w-full flex flex-col items-center border border-border/60 rounded-2xl p-3 hover:border-border transition-all duration-300 cursor-text gap-4 bg-background/80 backdrop-blur-xl relative',
+        isFocused && 'border-primary/30 shadow-sm shadow-primary/5',
         className
       )}
       style={{
         boxShadow: isFocused
-          ? '0 0 0 4px color-mix(in oklab, var(--primary) 10%, transparent)'
-          : 'none',
+          ? '0 0 0 3px color-mix(in oklab, var(--primary) 8%, transparent), 0 1px 3px color-mix(in oklab, var(--primary) 5%, transparent)'
+          : '0 1px 2px rgba(0,0,0,0.04)',
       }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -463,7 +467,7 @@ const ChatTextarea: React.FC<ChatTextareaProps> = ({
       />
 
       <div className="flex items-center justify-between gap-2 w-full">
-        <div className="flex items-center gap-2 max-w-[calc(100%-50px)] flex-wrap">
+        <div className="flex items-center gap-1.5 max-w-[calc(100%-50px)] flex-wrap">
           <input
             ref={imageInputRef}
             type="file"
@@ -472,63 +476,119 @@ const ChatTextarea: React.FC<ChatTextareaProps> = ({
             onChange={handleImagesUpload}
             hidden
           />
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => imageInputRef.current?.click()}
+            className="inline-flex items-center justify-center size-8 rounded-lg text-muted-foreground border border-border/50 bg-background/50 hover:bg-muted/60 hover:text-foreground hover:border-border transition-all duration-200 cursor-pointer active:scale-95"
           >
             <PlusIcon className="size-4" />
-          </Button>
+          </button>
+
+          <div className="w-px h-5 bg-border/50 mx-0.5" />
 
           <ModelSelectorV3 />
+
+          <OutputModeSelector selected={outputMode} onSelect={setOutputMode} />
 
           {/* Aspect Ratio Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex items-center gap-1"
-                size={'sm'}
-              >
-                <RectangleVertical className="size-4" />
-                <span className="text-sm">{selectedAspectRatio}</span>
-                <ChevronDown className="size-3 opacity-50" />
-              </Button>
+              <button className="group inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium text-muted-foreground border border-border/50 bg-background/50 hover:bg-muted/60 hover:text-foreground hover:border-border transition-all duration-200 cursor-pointer active:scale-95">
+                <RectangleVertical className="size-3.5" />
+                <span>{selectedAspectRatio}</span>
+                <ChevronDown className="size-3 opacity-40 group-hover:opacity-70 transition-opacity" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-32">
-              {['auto', '1:1', '4:3', '3:4', '16:9', '9:16'].map((ratio) => (
+            <DropdownMenuContent align="start" className="w-44 p-1.5 rounded-xl border-border/50 shadow-xl shadow-black/10">
+              {['auto', '1:1', '4:3', '3:4', '16:9', '9:16', '3:2', '2:3'].map((ratio) => (
                 <DropdownMenuItem
                   key={ratio}
                   onClick={() => setSelectedAspectRatio(ratio)}
-                  className="flex items-center justify-between"
+                  className={cn(
+                    'flex items-center justify-between rounded-lg px-3 py-2 text-sm cursor-pointer transition-all duration-150',
+                    selectedAspectRatio === ratio && 'bg-primary/8 ring-1 ring-primary/15 font-medium'
+                  )}
                 >
                   <span>{ratio}</span>
                   {selectedAspectRatio === ratio && (
-                    <div className="size-2 rounded-full bg-primary" />
+                    <div className="size-1.5 rounded-full bg-primary" />
                   )}
                 </DropdownMenuItem>
               ))}
+
+              {/* Custom size input */}
+              <div className="my-1.5 h-px bg-border/40" />
+              <div className="px-2 py-1.5">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
+                  Custom Size
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min={64}
+                    max={4096}
+                    step={64}
+                    placeholder="W"
+                    value={customWidth}
+                    onChange={(e) => setCustomWidth(e.target.value)}
+                    className="h-8 w-full min-w-0 rounded-md border border-border/60 bg-background px-2 text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary/30"
+                  />
+                  <span className="text-xs text-muted-foreground shrink-0">×</span>
+                  <input
+                    type="number"
+                    min={64}
+                    max={4096}
+                    step={64}
+                    placeholder="H"
+                    value={customHeight}
+                    onChange={(e) => setCustomHeight(e.target.value)}
+                    className="h-8 w-full min-w-0 rounded-md border border-border/60 bg-background px-2 text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary/30"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const w = parseInt(customWidth)
+                    const h = parseInt(customHeight)
+                    if (w && h && w >= 64 && h >= 64) {
+                      setSelectedAspectRatio(`${w}x${h}`)
+                    } else {
+                      toast.error(t('chat:textarea.invalidSize'))
+                    }
+                  }}
+                  disabled={!customWidth || !customHeight}
+                  className="mt-1.5 w-full h-7 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+              {selectedAspectRatio !== 'auto' && !['1:1', '4:3', '3:4', '16:9', '9:16', '3:2', '2:3'].includes(selectedAspectRatio) && (
+                <DropdownMenuItem
+                  onClick={() => setSelectedAspectRatio(selectedAspectRatio)}
+                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm cursor-pointer bg-primary/8 ring-1 ring-primary/15 font-medium"
+                >
+                  <span>{selectedAspectRatio}</span>
+                  <div className="size-1.5 rounded-full bg-primary" />
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
           {/* Quantity Selector */}
           <div className="relative" ref={quantitySliderRef}>
-            <Button
-              variant="outline"
-              className="flex items-center gap-1"
+            <button
               onClick={() => setShowQuantitySlider(!showQuantitySlider)}
-              size={'sm'}
+              className="group inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium text-muted-foreground border border-border/50 bg-background/50 hover:bg-muted/60 hover:text-foreground hover:border-border transition-all duration-200 cursor-pointer active:scale-95"
             >
-              <Hash className="size-4" />
-              <span className="text-sm">{quantity}</span>
-              <ChevronDown className="size-3 opacity-50" />
-            </Button>
+              <Hash className="size-3.5" />
+              <span>{quantity}</span>
+              <ChevronDown className="size-3 opacity-40 group-hover:opacity-70 transition-opacity" />
+            </button>
 
             {/* Quantity Slider */}
             <AnimatePresence>
               {showQuantitySlider && (
                 <motion.div
-                  className="absolute bottom-full mb-2 left-0  bg-background border border-border rounded-lg p-4 shadow-lg min-w-48"
+                  className="absolute bottom-full mb-2 left-0 bg-popover border border-border/50 rounded-xl p-4 shadow-xl shadow-black/10 min-w-52"
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -536,36 +596,54 @@ const ChatTextarea: React.FC<ChatTextareaProps> = ({
                 >
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
+                      <span className="text-xs font-medium text-foreground">
                         {t('chat:textarea.quantity', 'Image Quantity')}
                       </span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-xs font-semibold text-primary tabular-nums bg-primary/10 px-2 py-0.5 rounded-md">
                         {quantity}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">1</span>
+                      <span className="text-[10px] text-muted-foreground tabular-nums">1</span>
                       <input
                         type="range"
                         min="1"
                         max={MAX_QUANTITY}
                         value={quantity}
                         onChange={(e) => setQuantity(Number(e.target.value))}
-                        className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer
+                        className="flex-1 h-1.5 bg-muted rounded-full appearance-none cursor-pointer
                                   [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
                                   [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary
-                                  [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm
+                                  [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:shadow-primary/25
+                                  [&::-webkit-slider-thumb]:ring-2 [&::-webkit-slider-thumb]:ring-primary/20
                                   [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
-                                  [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
+                                  [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0
+                                  [&::-moz-range-thumb]:shadow-md"
                       />
-                      <span className="text-xs text-muted-foreground">
-                        {MAX_QUANTITY}
-                      </span>
+                      <span className="text-[10px] text-muted-foreground tabular-nums">{MAX_QUANTITY}</span>
+                    </div>
+                    {/* Quick presets */}
+                    <div className="flex items-center gap-1">
+                      {[1, 4, 8, 16, 40].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setQuantity(preset)}
+                          className={cn(
+                            'flex-1 h-6 text-[10px] font-medium rounded-md border transition-all duration-150 cursor-pointer',
+                            quantity === preset
+                              ? 'bg-primary/10 text-primary border-primary/20'
+                              : 'border-border/40 text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                          )}
+                        >
+                          {preset}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  {/* Arrow pointing down */}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border"></div>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-background translate-y-[-1px]"></div>
+                  {/* Arrow */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border/50"></div>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-popover translate-y-[-1px]"></div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -573,25 +651,35 @@ const ChatTextarea: React.FC<ChatTextareaProps> = ({
         </div>
 
         {pending ? (
-          <Button
-            className="shrink-0 relative"
-            variant="default"
-            size="icon"
+          <motion.button
+            className="shrink-0 relative h-10 w-10 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 cursor-pointer flex items-center justify-center"
             onClick={handleCancelChat}
+            whileTap={{ scale: 0.9 }}
           >
-            <Loader2 className="size-5.5 animate-spin absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-            <Square className="size-2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          </Button>
+            <Loader2 className="size-[18px] animate-spin" />
+            <Square className="size-[5px] fill-current absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/15 pointer-events-none" />
+          </motion.button>
         ) : (
-          <Button
-            className="shrink-0"
-            variant="default"
-            size="icon"
+          <motion.button
+            className={cn(
+              'shrink-0 h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer relative overflow-hidden',
+              (!textModel || !selectedTools || prompt.length === 0)
+                ? 'bg-muted/60 text-muted-foreground/35 cursor-not-allowed'
+                : 'bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5 active:scale-90 active:translate-y-0'
+            )}
             onClick={handleSendPrompt}
             disabled={!textModel || !selectedTools || prompt.length === 0}
+            whileTap={{ scale: 0.9 }}
           >
-            <ArrowUp className="size-4" />
-          </Button>
+            <ArrowUp className="size-[18px] relative z-10" strokeWidth={2.5} />
+            {textModel && selectedTools && prompt.length > 0 && (
+              <>
+                <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/15 pointer-events-none z-10" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              </>
+            )}
+          </motion.button>
         )}
       </div>
     </motion.div>

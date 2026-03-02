@@ -33,6 +33,7 @@ import ToolCallTag from './Message/ToolCallTag'
 import SessionSelector from './SessionSelector'
 import ChatSpinner from './Spinner'
 import ToolcallProgressUpdate from './ToolcallProgressUpdate'
+import MCoTReasoningPanel, { MCoTStep } from './MCoTReasoningPanel'
 import ShareTemplateDialog from './ShareTemplateDialog'
 
 import { useConfigs } from '@/contexts/configs'
@@ -40,10 +41,11 @@ import 'react-photo-view/dist/react-photo-view.css'
 import { DEFAULT_SYSTEM_PROMPT } from '@/constants'
 import { ModelInfo, ToolInfo } from '@/api/model'
 import { Button } from '@/components/ui/button'
-import { Share2 } from 'lucide-react'
+import { Share2, PanelRightClose } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useQueryClient } from '@tanstack/react-query'
 import MixedContent, { MixedContentImages, MixedContentText } from './Message/MixedContent'
+import CanvasEditHandler from '@/components/canvas/CanvasEditHandler'
 
 
 type ChatInterfaceProps = {
@@ -51,6 +53,7 @@ type ChatInterfaceProps = {
   sessionList: Session[]
   setSessionList: Dispatch<SetStateAction<Session[]>>
   sessionId: string
+  onToggleVisibility?: () => void
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -58,6 +61,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   sessionList,
   setSessionList,
   sessionId: searchSessionId,
+  onToggleVisibility,
 }) => {
   const { t } = useTranslation()
   const [session, setSession] = useState<Session | null>(null)
@@ -65,6 +69,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const { authStatus } = useAuth()
   const [showShareDialog, setShowShareDialog] = useState(false)
   const queryClient = useQueryClient()
+
+  // MCoT reasoning steps - dynamically updated based on toolcall progress
+  const [mcotSteps, setMcotSteps] = useState<MCoTStep[]>([])
+  const [showMcotPanel, setShowMcotPanel] = useState(false)
 
   useEffect(() => {
     if (sessionList.length > 0) {
@@ -154,7 +162,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               last.content.at(-1) &&
               last.content.at(-1)!.type === 'text'
             ) {
-              ;(last.content.at(-1) as { text: string }).text += data.text
+              ; (last.content.at(-1) as { text: string }).text += data.text
             }
           } else {
             prev.push({
@@ -185,6 +193,51 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       if (existToolCall) {
         return
       }
+
+      // Generate MCoT reasoning steps based on toolcall
+      const toolName = data.name || ''
+      const isImageTool = /image|draw|paint|generate/i.test(toolName)
+      const isVideoTool = /video|animate|motion/i.test(toolName)
+      const isBrandTool = /brand|logo|color/i.test(toolName)
+
+      const baseSteps: MCoTStep[] = [
+        {
+          id: 'analysis',
+          type: 'analysis',
+          title: t('chat:mcot.steps.analysis', 'Context Analysis'),
+          description: t('chat:mcot.steps.analysisDesc', 'Parsing user intent and design requirements'),
+          status: 'done',
+        },
+        {
+          id: 'audience',
+          type: 'audience',
+          title: t('chat:mcot.steps.audience', 'Audience Profiling'),
+          description: t('chat:mcot.steps.audienceDesc', 'Identifying target audience and use case'),
+          status: 'done',
+        },
+        {
+          id: 'planning',
+          type: 'planning',
+          title: t('chat:mcot.steps.planning', 'Task Planning'),
+          description: t('chat:mcot.steps.planningDesc', 'Selecting models and decomposing subtasks'),
+          status: 'done',
+        },
+        {
+          id: 'execution',
+          type: 'execution',
+          title: t('chat:mcot.steps.execution', 'Executing Generation'),
+          description: isImageTool
+            ? t('chat:mcot.steps.executionImage', 'Generating image assets with selected model')
+            : isVideoTool
+              ? t('chat:mcot.steps.executionVideo', 'Rendering video frames and motion')
+              : isBrandTool
+                ? t('chat:mcot.steps.executionBrand', 'Designing brand assets and visual system')
+                : t('chat:mcot.steps.executionDefault', 'Running multi-agent pipeline'),
+          status: 'running',
+        },
+      ]
+      setMcotSteps(baseSteps)
+      setShowMcotPanel(true)
 
       setMessages(
         produce((prev) => {
@@ -428,6 +481,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setPending(false)
       scrollToBottom()
 
+      // Mark all MCoT steps as done
+      setMcotSteps((prev) =>
+        prev.map((step) => ({ ...step, status: 'done' as const }))
+      )
+      // Hide MCoT panel after a delay
+      setTimeout(() => setShowMcotPanel(false), 2000)
+
       // 聊天输出完毕后更新余额
       if (authStatus.is_logged_in) {
         queryClient.invalidateQueries({ queryKey: ['balance'] })
@@ -613,6 +673,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </Button>
           )} */}
 
+          {onToggleVisibility && (
+            <Button
+              variant='ghost'
+              size='sm'
+              className='ml-2 shrink-0 h-7 px-2 text-muted-foreground hover:text-foreground'
+              onClick={onToggleVisibility}
+              title={t('canvas:chat.hideChat', 'Hide chat')}
+            >
+              <PanelRightClose className='h-4 w-4' />
+            </Button>
+          )}
+
           <Blur className='absolute top-0 left-0 right-0 h-full -z-1' />
         </header>
 
@@ -715,6 +787,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {pending && sessionId && (
                 <ToolcallProgressUpdate sessionId={sessionId} />
               )}
+              {showMcotPanel && mcotSteps.length > 0 && (
+                <MCoTReasoningPanel steps={mcotSteps} className="mt-2" />
+              )}
             </div>
           ) : (
             <motion.div className='flex flex-col h-full p-4 items-start justify-start pt-16 select-none'>
@@ -755,6 +830,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             setMessages={setMessages}
             setPending={setPending}
             scrollToBottom={scrollToBottom}
+          />
+
+          {/* Canvas 图像编辑事件处理器 */}
+          <CanvasEditHandler
+            sessionId={sessionId || ''}
+            canvasId={canvasId}
           />
         </div>
       </div>

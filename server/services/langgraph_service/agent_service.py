@@ -6,11 +6,129 @@ import traceback
 from utils.http_client import HttpClient
 from langgraph_swarm import create_swarm  # type: ignore
 from langchain_openai import ChatOpenAI
-from langchain_ollama import ChatOllama
 from services.websocket_service import send_to_websocket  # type: ignore
 from services.config_service import config_service
 from typing import Optional, List, Dict, Any, cast, Set, TypedDict
 from models.config_model import ModelInfo
+
+
+# 兼容 langchain_core 0.3.x 在未安装 langchain 主包或主包版本不一致时
+# 访问 `langchain.verbose` / `langchain.debug` / `langchain.llm_cache` 抛
+# AttributeError 的问题。
+# 触发点：
+#   - langchain_core.language_models.base._get_verbosity → globals.get_verbose
+#   - langchain_core.callbacks.manager._get_debug → globals.get_debug
+#   - langchain_core.language_models.chat_models._agenerate_with_cache →
+#       globals.get_llm_cache
+# 它们都假设 langchain 主包已安装并具有相应属性。
+# 当 langgraph_swarm / langchain_openai 等子包先于 langchain_core 被 import 时，
+# 它们会向 sys.modules 注入一个不含 verbose/debug/llm_cache 的 langchain 命名
+# 空间 stub，导致 AttributeError。
+# 兜底策略：
+#   1) 显式 set_verbose / set_debug / set_llm_cache，初始化新版内部状态；
+#   2) Monkey-patch get_verbose / get_debug / get_llm_cache，遇到 AttributeError
+#      时回退到内部状态；
+#   3) Patch 已经 import 过的下游模块的引用（base / manager / config /
+#      chat_models）；
+#   4) 若 langchain 命名空间存在但缺 verbose/debug/llm_cache 属性，自动补上。
+def _install_langchain_core_compat() -> None:
+    try:
+        from langchain_core import globals as _lc_globals
+    except Exception:
+        return
+
+    # 1) 显式调用 set_*，初始化新版本内部状态
+    try:
+        _lc_globals.set_verbose(False)  # type: ignore[attr-defined]
+    except Exception:
+        try:
+            _lc_globals._verbose = False  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    try:
+        _lc_globals.set_debug(False)  # type: ignore[attr-defined]
+    except Exception:
+        try:
+            _lc_globals._debug = False  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    try:
+        _lc_globals.set_llm_cache(None)  # type: ignore[attr-defined]
+    except Exception:
+        try:
+            _lc_globals._llm_cache = None  # type: ignore[attr-defined]
+        except Exception:
+            pass
+
+    # 2) Monkey-patch get_* 函数，捕获 AttributeError 并回退
+    _orig_get_verbose = getattr(_lc_globals, 'get_verbose', None)
+    _orig_get_debug = getattr(_lc_globals, 'get_debug', None)
+    _orig_get_llm_cache = getattr(_lc_globals, 'get_llm_cache', None)
+
+    def _safe_get_verbose() -> bool:  # type: ignore[no-redef]
+        try:
+            if _orig_get_verbose is not None:
+                return _orig_get_verbose()
+        except AttributeError:
+            pass
+        return getattr(_lc_globals, '_verbose', False)
+
+    def _safe_get_debug() -> bool:  # type: ignore[no-redef]
+        try:
+            if _orig_get_debug is not None:
+                return _orig_get_debug()
+        except AttributeError:
+            pass
+        return getattr(_lc_globals, '_debug', False)
+
+    def _safe_get_llm_cache() -> "Optional[object]":  # type: ignore[no-redef]
+        try:
+            if _orig_get_llm_cache is not None:
+                return _orig_get_llm_cache()
+        except AttributeError:
+            pass
+        return getattr(_lc_globals, '_llm_cache', None)
+
+    _lc_globals.get_verbose = _safe_get_verbose  # type: ignore[assignment]
+    _lc_globals.get_debug = _safe_get_debug  # type: ignore[assignment]
+    _lc_globals.get_llm_cache = _safe_get_llm_cache  # type: ignore[assignment]
+
+    # 3) Patch 已经 import 过的下游模块的引用
+    try:
+        from langchain_core.language_models import base as _lc_base
+        _lc_base.get_verbose = _safe_get_verbose  # type: ignore[assignment]
+    except Exception:
+        pass
+    try:
+        from langchain_core.callbacks import manager as _lc_manager
+        _lc_manager.get_debug = _safe_get_debug  # type: ignore[assignment]
+    except Exception:
+        pass
+    try:
+        from langchain_core.runnables import config as _lc_config
+        _lc_config.get_debug = _safe_get_debug  # type: ignore[assignment]
+    except Exception:
+        pass
+    try:
+        from langchain_core.language_models import chat_models as _lc_chat_models
+        _lc_chat_models.get_llm_cache = _safe_get_llm_cache  # type: ignore[assignment]
+    except Exception:
+        pass
+
+
+_install_langchain_core_compat()
+
+# 4) 若 langchain 命名空间存在但缺 verbose/debug/llm_cache，补上默认属性
+try:
+    import langchain  # type: ignore
+    if not hasattr(langchain, 'verbose'):
+        langchain.verbose = False  # type: ignore[attr-defined]
+    if not hasattr(langchain, 'debug'):
+        langchain.debug = False  # type: ignore[attr-defined]
+    if not hasattr(langchain, 'llm_cache'):
+        langchain.llm_cache = None  # type: ignore[attr-defined]
+except Exception:
+    pass
 
 
 class ContextInfo(TypedDict):
@@ -120,7 +238,7 @@ async def langgraph_multi_agent(
         )
 
         # 5. 创建上下文
-        context = {
+        context: Dict[str, Any] = {
             'canvas_id': canvas_id,
             'session_id': session_id,
             'tool_list': tool_list,
@@ -132,7 +250,109 @@ async def langgraph_multi_agent(
         await processor.process_stream(swarm, fixed_messages, context)
 
     except Exception as e:
+        # 检查是否是文本模型连接错误，如果是则尝试直接调用图像生成工具
+        if _is_connection_error(e) and tool_list:
+            print(f"⚠️ 文本模型连接失败，尝试直接调用图像生成工具: {e}")
+            handled = await _try_direct_image_generation(
+                e, messages, canvas_id, session_id, tool_list
+            )
+            if handled:
+                return
         await _handle_error(e, session_id)
+
+
+def _is_connection_error(error: Exception) -> bool:
+    """检查是否是网络连接错误"""
+    error_str = str(error).lower()
+    # openai.APIConnectionError 或类似连接错误
+    if 'connection' in error_str or 'connect' in error_str:
+        return True
+    if 'apiconnectionerror' in type(error).__name__.lower():
+        return True
+    # 检查异常链
+    cause = error.__cause__
+    if cause and ('connection' in str(cause).lower() or 'apiconnectionerror' in type(cause).__name__.lower()):
+        return True
+    return False
+
+
+async def _try_direct_image_generation(
+    error: Exception,
+    messages: List[Dict[str, Any]],
+    canvas_id: str,
+    session_id: str,
+    tool_list: List[ToolInfoJson],
+) -> bool:
+    """
+    当文本模型不可用时，尝试直接用用户提示词调用图像生成工具。
+
+    Returns:
+        True 如果成功调用了图像生成，False 如果无法处理
+    """
+    try:
+        # 从消息中提取最后的用户提示词
+        user_prompt = ""
+        for msg in reversed(messages):
+            if msg.get('role') == 'user':
+                content = msg.get('content', '')
+                if isinstance(content, str):
+                    user_prompt = content
+                elif isinstance(content, list):
+                    # 处理多模态消息
+                    for part in content:
+                        if isinstance(part, dict) and part.get('type') == 'text':
+                            user_prompt = part.get('text', '')
+                            break
+                break
+
+        if not user_prompt.strip():
+            print("⚠️ 无法提取用户提示词，跳过直接图像生成")
+            return False
+
+        # 找到第一个图像生成工具
+        image_tool = None
+        for tool in tool_list:
+            if tool.get('type') == 'image':
+                image_tool = tool
+                break
+
+        if not image_tool:
+            print("⚠️ 没有可用的图像生成工具")
+            return False
+
+        provider = image_tool.get('provider', 'agnes')
+        model = image_tool.get('model') or image_tool.get('id', 'agnes-image-2.0-flash')
+
+        print(f"🎨 直接图像生成 fallback: provider={provider}, model={model}")
+        print(f"   提示词: {user_prompt[:100]}...")
+
+        # 通知前端正在直接生成图像
+        await send_to_websocket(session_id, cast(Dict[str, Any], {
+            'type': 'info',
+            'info': f'文本模型不可用，正在直接生成图像...'
+        }))
+
+        # 导入图像生成核心函数
+        from tools.utils.image_generation_core import generate_image_with_provider
+
+        # 直接调用图像生成（纯文生图，无输入图片）
+        result = await generate_image_with_provider(
+            canvas_id=canvas_id,
+            session_id=session_id,
+            provider=provider,
+            model=model,
+            prompt=user_prompt,
+            aspect_ratio="1:1",
+            input_images=None,
+        )
+
+        print(f"✅ 直接图像生成成功: {result}")
+        return True
+
+    except Exception as fallback_error:
+        print(f"❌ 直接图像生成 fallback 也失败了: {fallback_error}")
+        traceback.print_exc()
+        return False
 
 
 def _create_text_model(text_model: ModelInfo) -> Any:
@@ -147,6 +367,14 @@ def _create_text_model(text_model: ModelInfo) -> Any:
     # max_tokens = text_model.get('max_tokens', 8148)
 
     if provider == 'ollama':
+        try:
+            from langchain_ollama import ChatOllama
+        except Exception as e:
+            raise RuntimeError(
+                "Ollama provider requested but 'langchain_ollama' is not available."
+                " Install the package or enable a different provider in config."
+            ) from e
+
         return ChatOllama(
             model=model,
             base_url=url,

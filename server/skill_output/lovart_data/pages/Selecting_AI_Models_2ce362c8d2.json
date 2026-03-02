@@ -1,0 +1,48 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+  "title": "Selecting AI Models",
+  "content": "Open the Models panel to set model preferences for the current task. Turn Auto On to let the Agent choose the most suitable model automatically. Turn Auto Off to manually select the image, video, or 3D models you want to prioritize. The Agent may still route between similar models to balance quality, speed, and stability.\n\nImage Generator runs your prompt with an image model directly. Use it when you already know the model, resolution, and aspect ratio you want and don't want the Agent to pick for you.\n\nVideo Generator runs your prompt and input media through a video model directly to create engaging videos. Use it when you want fast, direct control over the model and settings.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Selecting AI Models",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Select AI Models",
+      "id": "d3a9af644108"
+    },
+    {
+      "level": "h3",
+      "text": "Image Generator",
+      "id": "8e6f4472cf04"
+    },
+    {
+      "level": "h3",
+      "text": "Video Generator",
+      "id": "bc4f64975112"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

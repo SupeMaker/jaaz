@@ -25,13 +25,13 @@ Settings Router - 设置路由模块
 
 import json
 import os
-import shutil
 import httpx
-from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Request
 from services.db_service import db_service
 from services.settings_service import settings_service
 from services.tool_service import tool_service
 from services.knowledge_service import list_user_enabled_knowledge
+from typing import Any, Optional
 from pydantic import BaseModel
 
 # 创建设置相关的路由器，所有端点都以 /api/settings 为前缀
@@ -39,7 +39,7 @@ router = APIRouter(prefix="/api/settings")
 
 
 @router.get("/exists")
-async def settings_exists():
+async def settings_exists() -> dict[str, Any]:
     """
     检查设置文件是否存在
 
@@ -54,7 +54,7 @@ async def settings_exists():
 
 
 @router.get("")
-async def get_settings():
+async def get_settings() -> dict[str, Any]:
     """
     获取所有设置配置
 
@@ -70,7 +70,7 @@ async def get_settings():
 
 
 @router.post("")
-async def update_settings(request: Request):
+async def update_settings(request: Request) -> dict[str, Any]:
     """
     更新设置配置
 
@@ -96,7 +96,7 @@ async def update_settings(request: Request):
 
 
 @router.get("/proxy/status")
-async def get_proxy_status():
+async def get_proxy_status() -> dict[str, Any]:
     """
     获取代理配置状态
 
@@ -150,7 +150,7 @@ async def get_proxy_status():
 
 
 @router.get("/proxy")
-async def get_proxy_settings():
+async def get_proxy_settings() -> dict[str, str]:
     """
     获取代理设置
 
@@ -171,7 +171,7 @@ async def get_proxy_settings():
 
 
 @router.post("/proxy")
-async def update_proxy_settings(request: Request):
+async def update_proxy_settings(request: Request) -> dict[str, Any]:
     """
     更新代理设置
 
@@ -231,14 +231,14 @@ async def update_proxy_settings(request: Request):
 
 class CreateWorkflowRequest(BaseModel):
     name: str
-    api_json: dict  # or str if you want it as string
+    api_json: dict[str, Any]
     description: str
-    inputs: list   # or str if you want it as string
-    outputs: str = None
+    inputs: list[Any]
+    outputs: Optional[str] = None
 
 
 @router.post("/comfyui/create_workflow")
-async def create_workflow(request: CreateWorkflowRequest):
+async def create_workflow(request: CreateWorkflowRequest) -> dict[str, Any]:
     if not request.name:
         raise HTTPException(status_code=400, detail="Name is required")
     if not request.api_json:
@@ -261,19 +261,19 @@ async def create_workflow(request: CreateWorkflowRequest):
 
 
 @router.get("/comfyui/list_workflows")
-async def list_workflows():
+async def list_workflows() -> Any:
     return await db_service.list_comfy_workflows()
 
 
 @router.delete("/comfyui/delete_workflow/{id}")
-async def delete_workflow(id: int):
+async def delete_workflow(id: int) -> Any:
     result = await db_service.delete_comfy_workflow(id)
     await tool_service.initialize()
     return result
 
 
 @router.post("/comfyui/proxy")
-async def comfyui_proxy(request: Request):
+async def comfyui_proxy(request: Request) -> Any:
     try:
         # 从请求中获取ComfyUI的目标URL和路径
         data = await request.json()
@@ -299,7 +299,7 @@ async def comfyui_proxy(request: Request):
 
 
 @router.get("/knowledge/enabled")
-async def get_enabled_knowledge():
+async def get_enabled_knowledge() -> dict[str, Any]:
     """
     获取启用的知识库列表
 
@@ -322,7 +322,7 @@ async def get_enabled_knowledge():
 
 
 @router.get("/my_assets_dir_path")
-async def get_my_assets_dir_path():
+async def get_my_assets_dir_path() -> dict[str, Any]:
     """
     获取用户的My Assets目录路径
     

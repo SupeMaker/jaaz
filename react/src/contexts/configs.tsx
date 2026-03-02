@@ -43,6 +43,11 @@ export const ConfigsProvider = ({
     setAllTools(toolList || [])
 
     // 设置选择的文本模型
+    const hasType = (model: ModelInfo, type: 'text' | 'image' | 'video') =>
+      Array.isArray(model.type)
+        ? model.type.includes(type)
+        : model.type === type
+
     const textModel = localStorage.getItem('text_model')
     if (
       textModel &&
@@ -52,7 +57,7 @@ export const ConfigsProvider = ({
         llmModels.find((m) => m.provider + ':' + m.model === textModel)
       )
     } else {
-      setTextModel(llmModels.find((m) => m.type === 'text'))
+      setTextModel(llmModels.find((m) => hasType(m, 'text')))
     }
 
     // 设置选中的工具模型

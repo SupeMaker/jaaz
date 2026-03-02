@@ -1,0 +1,53 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+  "title": "AI Transformation",
+  "content": "Multi-Angles takes one image and produces variants of the same subject from different viewpoints. Instead of prompting, you drag or adjust parameters in a panel. Use it for product listings, character sheets, video storyboards, and any image set that needs to show a subject from multiple angles.\n\nMulti-Angles has two modes:\n\nMove Object moves one object in an image to a new position while preserving the original background. Select the object with the Rectangle or Lasso tool, then drag it to the desired location. Lovart generates a coherent new image with the original location filled in.\n\nVectorize turns a raster image into an SVG by tracing its contours and shapes as multi-path vector geometry. Use it when you need a logo, icon, or illustration that stays crisp at any size and exports cleanly to design or print tools.\n\nMockup shows a flat design on a real-world object. Start from a photo of the object you want to mock — a poster, box, T-shirt — then place and position your design on it. Use it to present logos, labels, posters, or UI screens in context.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "AI Transformation",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Multi-Angles",
+      "id": "f2818230aa4c"
+    },
+    {
+      "level": "h3",
+      "text": "Move Object",
+      "id": "63cf102480ef"
+    },
+    {
+      "level": "h3",
+      "text": "Vectorize",
+      "id": "af26304dc32a"
+    },
+    {
+      "level": "h3",
+      "text": "Mockup",
+      "id": "036be09855f2"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

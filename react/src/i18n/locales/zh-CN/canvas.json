@@ -44,7 +44,90 @@
   },
   "popbar": {
     "addToChat": "添加到聊天",
-    "magicGenerate": "✨ 魔法生成"
+    "magicGenerate": "✨ 魔法生成",
+    "upscale": "高清放大",
+    "removeBg": "去背景",
+    "editElement": "编辑元素",
+    "editText": "编辑文字",
+    "expand": "扩展画布",
+    "redraw": "局部重绘",
+    "mockup": "Mockup",
+    "download": "下载"
+  },
+  "edit": {
+    "noImageSelected": "请先选择一张图片",
+    "processing": "{{action}} 处理中...",
+    "completed": "{{action}} 完成",
+    "failed": "{{action}} 失败",
+    "failedWithError": "{{action}} 失败：{{error}}",
+    "downloadFailed": "下载失败：{{error}}"
+  },
+  "chat": {
+    "chat": "聊天",
+    "hideChat": "隐藏聊天",
+    "showChat": "显示聊天"
+  },
+  "inpaint": {
+    "title": "局部重绘",
+    "touchMode": "点击选择",
+    "dragMode": "拖拽框选",
+    "clearSelection": "清除选区",
+    "touchInstructions": "点击图片中的元素选中，拖动选区调整位置，然后输入修改提示词。",
+    "dragInstructions": "在图片上拖拽绘制选区，然后输入修改提示词。",
+    "regionSelected": "已选区域",
+    "dragToSelect": "在图片上拖拽选择区域",
+    "noSelection": "未选择区域——将编辑整张图片",
+    "dragToMove": "拖动移动",
+    "editPrompt": "编辑提示词",
+    "placeholder": "例如：把猫换成狗、加一顶帽子、删除该物体……",
+    "elementPlaceholder": "例如：把猫换成狗、加一顶帽子、删除该物体……",
+    "textPlaceholder": "例如：将文字替换为\"你好世界\"、把字体颜色改为红色……",
+    "apply": "应用编辑",
+    "processing": "处理中...",
+    "completed": "局部重绘完成",
+    "failed": "局部重绘失败",
+    "failedWithError": "局部重绘失败：{{error}}",
+    "hint": "Ctrl+Enter 提交"
+  },
+  "mockup": {
+    "title": "Mockup / 贴纸",
+    "designImage": "设计图",
+    "selectDesign": "选择设计图",
+    "noDesignImages": "画布上没有其他图片。请先添加 Logo 或贴纸。",
+    "positionX": "水平位置",
+    "positionY": "垂直位置",
+    "scale": "缩放",
+    "rotate": "旋转",
+    "opacity": "透明度",
+    "cornerRadius": "圆角",
+    "shadow": "投影",
+    "apply": "应用 Mockup",
+    "processing": "处理中...",
+    "completed": "Mockup 完成",
+    "failed": "Mockup 失败",
+    "failedWithError": "Mockup 失败：{{error}}",
+    "hint": "调整位置后点击应用",
+    "noDesign": "请选择设计图"
+  },
+  "workMode": {
+    "talkDesc": "用自然语言描述你的设计需求",
+    "tabDesc": "点击选中画布元素进行编辑",
+    "tuneDesc": "迭代精修选中的设计元素"
+  },
+  "smartLayers": {
+    "title": "语义图层",
+    "empty": "未检测到图层。生成图像后将自动提取图层。",
+    "hint": "点击图层进行编辑。切换可见性以隔离图层。"
+  },
+  "campaignSuite": {
+    "title": "营销矩阵",
+    "subtitle": "一次创意延展到每个触点",
+    "generateAll": "全部生成",
+    "hint": "点击平台生成适配创意。品牌色与字体会自动应用。"
+  },
+  "history": {
+    "title": "历史快照",
+    "empty": "暂无快照。每次生成都会创建可恢复的快照。"
   },
   "myAssets": "我的素材",
   "selectAFolder": "选择文件夹",

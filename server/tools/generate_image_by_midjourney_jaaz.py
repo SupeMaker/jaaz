@@ -108,14 +108,14 @@ async def generate_image_by_midjourney_jaaz(
                 filename = f'{image_id}.{extension}'
 
                 # Save to canvas
-                canvas_image_url = await save_image_to_canvas(
+                saved_result = await save_image_to_canvas(
                     session_id, canvas_id, filename, mime_type, width, height
                 )
 
                 # Add to saved images list
                 saved_images.append({
                     "image_id": filename,
-                    "url": canvas_image_url,
+                    "url": saved_result.get("image_url", ""),
                     "index": i,
                     "original_data": image_data
                 })

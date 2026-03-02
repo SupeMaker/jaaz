@@ -91,8 +91,20 @@ async def generate_new_image_element(
     }
 
 
-async def save_image_to_canvas(session_id: str, canvas_id: str, filename: str, mime_type: str, width: int, height: int) -> str:
-    """Save image to canvas with proper locking and positioning"""
+async def save_image_to_canvas(
+    session_id: str,
+    canvas_id: str,
+    filename: str,
+    mime_type: str,
+    width: int,
+    height: int,
+    broadcast: bool = True,
+) -> Dict[str, Any]:
+    """Save image to canvas with proper locking and positioning.
+
+    Returns a dict with element, file, and image_url. When broadcast is True,
+    a websocket image_generated event is also emitted for chat-driven flows.
+    """
     # Use lock to ensure atomicity of the save process
     async with canvas_lock_manager.lock_canvas(canvas_id):
         # Fetch canvas data once inside the lock
@@ -137,15 +149,20 @@ async def save_image_to_canvas(session_id: str, canvas_id: str, filename: str, m
         # Save the updated canvas data back to the database
         await db_service.save_canvas_data(canvas_id, json.dumps(canvas_data))
 
-        # Broadcast image generation message to frontend
-        await broadcast_session_update(session_id, canvas_id, {
-            'type': 'image_generated',
+        result = {
             'element': new_image_element,
             'file': file_data,
             'image_url': image_url,
-        })
+        }
 
-        return image_url
+        # Broadcast image generation message to frontend
+        if broadcast:
+            await broadcast_session_update(session_id, canvas_id, {
+                'type': 'image_generated',
+                **result,
+            })
+
+        return result
 
 
 async def send_image_start_notification(session_id: str, message: str) -> None:

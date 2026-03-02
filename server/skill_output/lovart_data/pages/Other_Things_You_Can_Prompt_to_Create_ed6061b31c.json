@@ -1,0 +1,48 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+  "title": "Other Things You Can Prompt to Create",
+  "content": "Font Generator produces a full custom font from a reference image, a text description, or both. Use it for stylized poster titles, e-commerce hero images, branded display type, or any time you need typography that doesn't exist in a stock font library. Generated fonts are saved to your Font Library and can be applied to any text layer on the Canvas.\n\nLovart Slides generates a full presentation deck from text, reference images, or a source PDF. The Agent researches and organizes the content, plans the deck sequence, and keeps the visual language coherent across pages.\n\nVideo Clipper combines multiple video clips, images, audio tracks, and text into a single edited video. Use it when you need to assemble a video from multiple sources.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Other Things You Can Prompt to Create",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Font Generator",
+      "id": "aedf5b8c5acd"
+    },
+    {
+      "level": "h3",
+      "text": "Lovart Slides",
+      "id": "cd465256ff1d"
+    },
+    {
+      "level": "h3",
+      "text": "Video Clipper",
+      "id": "8436f093a258"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

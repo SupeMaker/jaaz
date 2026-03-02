@@ -1,7 +1,6 @@
 import os
 import random
 import traceback
-from types import NoneType
 from typing import Optional, List, Any
 from pydantic import BaseModel
 from openai.types import Image
@@ -62,6 +61,7 @@ class VolcesProvider(ImageProviderBase):
         Returns:
             tuple[str, int, int, str]: (mime_type, width, height, filename)
         """
+        image_url = None
         if hasattr(result, "data"):
             if len(result.data) > 0:
                 image_data = result.data[0]
@@ -69,8 +69,8 @@ class VolcesProvider(ImageProviderBase):
                     image_url = image_data.url
         elif isinstance(result, str):
             image_url = result
-        # If no valid image data found
-        else:
+
+        if image_url is None:
             raise Exception(
                 f"{error_prefix} image generation failed: No valid image data in response"
             )
@@ -87,7 +87,7 @@ class VolcesProvider(ImageProviderBase):
         prompt: str,
         model: str,
         aspect_ratio: str = "1:1",
-        input_images: list[str] | NoneType = None,
+        input_images: Optional[list[str]] = None,
         **kwargs: Any,
     ) -> tuple[str, int, int, str]:
         """

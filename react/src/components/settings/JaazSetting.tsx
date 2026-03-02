@@ -75,16 +75,20 @@ export default function JaazSetting({
           return (
             <div key={modelName} className="flex items-center justify-between">
               <p className="w-[50%]">{modelName}</p>
-              <div className="flex items-center gap-6">
-                <p>{modelConfig.type || 'text'}</p>
-                {/* TODO: re-enable this switch */}
-                {/* <Switch
-                  checked={!modelConfig.is_disabled}
-                  onCheckedChange={(checked) =>
-                    handleModelToggle(modelName, checked)
-                  }
-                /> */}
-              </div>
+                      <div className="flex items-center gap-6">
+                  <p>
+                    {Array.isArray(modelConfig.type)
+                      ? modelConfig.type.join(', ')
+                      : modelConfig.type || 'text'}
+                  </p>
+                  {/* TODO: re-enable this switch */}
+                  {/* <Switch
+                    checked={!modelConfig.is_disabled}
+                    onCheckedChange={(checked) =>
+                      handleModelToggle(modelName, checked)
+                    }
+                  /> */}
+                </div>
             </div>
           )
         })}

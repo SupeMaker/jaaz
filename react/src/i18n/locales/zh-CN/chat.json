@@ -8,7 +8,8 @@
     "selectModel": "请选择一个文本模型！如果您还没有设置 API 密钥，请前往设置页面进行配置。",
     "selectTool": "请选择一个图片模型！如果您还没有设置 API 密钥，请前往设置页面进行配置。",
     "enterPrompt": "请输入提示内容",
-    "quantity": "生成数量"
+    "quantity": "生成数量",
+    "invalidSize": "尺寸无效，宽度和高度必须至少为 64 像素。"
   },
   "messages": {
     "imagePositioning": "定位到图片",
@@ -52,6 +53,24 @@
       "image": "图像",
       "video": "视频",
       "text": "文本"
+    }
+  },
+  "mcot": {
+    "title": "MCoT 思维链推理",
+    "steps": {
+      "analysis": "上下文分析",
+      "analysisDesc": "解析用户意图与设计需求",
+      "audience": "受众画像",
+      "audienceDesc": "识别目标受众与使用场景",
+      "brand": "品牌对齐",
+      "brandDesc": "校验品牌色、字体与规范",
+      "planning": "任务规划",
+      "planningDesc": "选择模型并拆解子任务",
+      "execution": "执行生成",
+      "executionImage": "使用所选模型生成图像资产",
+      "executionVideo": "渲染视频帧与动态效果",
+      "executionBrand": "设计品牌资产与视觉系统",
+      "executionDefault": "运行多智能体流水线"
     }
   }
 }

@@ -1,25 +1,22 @@
 import json
-import os
-from socket import timeout
-import sys
 import time
-import urllib.error
 import urllib.parse
 import uuid
 from datetime import timedelta
-import asyncio
+from typing import Any, Optional
 
 import httpx
 import websockets
 import typer
 from rich import print as pprint
-from rich.progress import BarColumn, Column, Progress, Table, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, TimeElapsedColumn
+from rich.table import Column, Table
 from utils.http_client import HttpClient
 
 from services.websocket_service import send_to_websocket
 
 
-async def check_comfy_server_running(base_url):
+async def check_comfy_server_running(base_url: str) -> bool:
     async with HttpClient.create(timeout=10) as client:
         url = f"{base_url}/api/prompt"
         response = await client.get(url)
@@ -27,21 +24,23 @@ async def check_comfy_server_running(base_url):
 
 
 async def execute(
-    workflow: dict,
-    base_url,
-    wait=True,
-    verbose=False,
-    local_paths=False,
-    timeout=300,
-    ctx: dict = {},
+    workflow: dict[str, Any],
+    base_url: str,
+    wait: bool = True,
+    verbose: bool = False,
+    local_paths: bool = False,
+    timeout: int = 300,
+    ctx: Optional[dict[str, Any]] = None,
 ):
+    if ctx is None:
+        ctx = {}
     if not await check_comfy_server_running(base_url):
         pprint(
             f"[bold red]ComfyUI not running on specified address ({base_url})[/bold red]"
         )
         raise typer.Exit(code=1)
 
-    progress = None
+    progress: Optional[ExecutionProgress] = None
     start = time.time()
     if wait:
         pprint("Executing comfyui workflow")
@@ -62,7 +61,8 @@ async def execute(
         if wait:
             await execution.watch_execution()
             end = time.time()
-            progress.stop()
+            if progress:
+                progress.stop()
             progress = None
 
             if len(execution.outputs) > 0:
@@ -111,34 +111,35 @@ class ExecutionProgress(Progress):
 class WorkflowExecution:
     def __init__(
         self,
-        workflow,
-        base_url,
-        verbose,
-        progress,
-        local_paths,
-        timeout=30,
-        ctx: dict = {},
+        workflow: dict[str, Any],
+        base_url: str,
+        verbose: bool,
+        progress: Optional[ExecutionProgress],
+        local_paths: bool,
+        timeout: int = 30,
+        ctx: Optional[dict[str, Any]] = None,
     ):
         self.workflow = workflow
         self.base_url = base_url
         self.verbose = verbose
         self.local_paths = local_paths
         self.client_id = str(uuid.uuid4())
-        self.outputs = []
+        self.outputs: list[str] = []
         self.progress = progress
-        self.remaining_nodes = set(self.workflow.keys())
+        self.remaining_nodes: set[str] = set(self.workflow.keys())
         self.total_nodes = len(self.remaining_nodes)
-        if progress:
+        self.overall_task: Any = None
+        if self.progress is not None:
             self.overall_task = self.progress.add_task(
                 "", total=self.total_nodes, progress_type="overall"
             )
-        self.current_node = None
-        self.progress_task = None
-        self.progress_node = None
-        self.prompt_id = None
-        self.ws = None
+        self.current_node: Optional[str] = None
+        self.progress_task: Any = None
+        self.progress_node: Optional[str] = None
+        self.prompt_id: Optional[str] = None
+        self.ws: Any = None
         self.timeout = timeout
-        self.ctx = ctx
+        self.ctx: dict[str, Any] = ctx if ctx is not None else {}
 
     async def connect(self):
         if self.base_url.startswith("https"):
@@ -152,8 +153,8 @@ class WorkflowExecution:
             f"{self.ws_core}{ws_url}/ws?clientId={self.client_id}"
         )
 
-    async def queue(self):
-        data = {"prompt": self.workflow, "client_id": self.client_id}
+    async def queue(self) -> None:
+        data: dict[str, Any] = {"prompt": self.workflow, "client_id": self.client_id}
         async with HttpClient.create() as client:
             try:
                 response = await client.post(f"{self.base_url}/prompt", json=data)
@@ -168,15 +169,18 @@ class WorkflowExecution:
                     if body["node_errors"].keys():
                         message = json.dumps(body["node_errors"], indent=2)
 
-                self.progress.stop()
+                if self.progress:
+                    self.progress.stop()
 
                 pprint(f"[bold red]Error running workflow\n{message}[/bold red]")
                 await send_to_websocket(
-                    self.ctx.get("session_id"), {"type": "error", "error": message}
+                    self.ctx.get("session_id") or "", {"type": "error", "error": message}
                 )
                 raise Exception(message)
 
-    async def watch_execution(self):
+    async def watch_execution(self) -> None:
+        if self.ws is None:
+            raise Exception("WebSocket not connected")
         async for message in self.ws:
             if isinstance(message, str):
                 message = json.loads(message)
@@ -196,20 +200,21 @@ class WorkflowExecution:
                                 continue
                         except Exception as e:
                             pprint(f"[bold red]Error getting history\n{str(e)}[/bold red]")
-                            raise Exception(message)
+                            raise Exception(str(e))
 
-    def update_overall_progress(self):
-        self.progress.update(
-            self.overall_task, completed=self.total_nodes - len(self.remaining_nodes)
-        )
+    def update_overall_progress(self) -> None:
+        if self.progress and self.overall_task is not None:
+            self.progress.update(
+                self.overall_task, completed=self.total_nodes - len(self.remaining_nodes)
+            )
 
-    def get_node_title(self, node_id):
+    def get_node_title(self, node_id: str) -> str:
         node = self.workflow[node_id]
         if "_meta" in node and "title" in node["_meta"]:
             return node["_meta"]["title"]
         return node["class_type"]
 
-    def log_node(self, type, node_id):
+    def log_node(self, type: str, node_id: str) -> None:
         if not self.verbose:
             return
 
@@ -223,12 +228,12 @@ class WorkflowExecution:
 
         pprint(f"{type} : {title}")
 
-    def format_image_path(self, img):
+    def format_image_path(self, img: dict[str, Any]) -> str:
         query = urllib.parse.urlencode(img)
         return f"{self.base_url}/view?{query}"
 
-    async def on_message(self, message):
-        data = message["data"] if "data" in message else {}
+    async def on_message(self, message: dict[str, Any]) -> Optional[bool]:
+        data: dict[str, Any] = message["data"] if "data" in message else {}
         if "prompt_id" not in data or data["prompt_id"] != self.prompt_id:
             return True
 
@@ -247,20 +252,21 @@ class WorkflowExecution:
 
         return True
 
-    async def on_status(self, data):
+    async def on_status(self, data: dict[str, Any]) -> None:
         queue = data['data']['status']['exec_info']['queue_remaining']
+        session_id = self.ctx.get("session_id") or ""
         await send_to_websocket(
-            self.ctx.get("session_id"),
+            session_id,
             {
                 "type": "tool_call_progress",
                 "tool_call_id": self.ctx.get("tool_call_id"),
-                "session_id": self.ctx.get("session_id"),
+                "session_id": session_id,
                 "update": f"In queue, there's {queue} works ahead...",
             },
         )
 
-    async def on_executing(self, data):
-        if self.progress_task:
+    async def on_executing(self, data: dict[str, Any]) -> bool:
+        if self.progress_task and self.progress is not None:
             self.progress.remove_task(self.progress_task)
             self.progress_task = None
 
@@ -271,53 +277,56 @@ class WorkflowExecution:
                 self.remaining_nodes.discard(self.current_node)
                 self.update_overall_progress()
             # Use display_node if available, otherwise use node
-            node_id = data.get("display_node", data.get('node'))
+            node_id: str = str(data.get("display_node", data.get('node')))
             
             self.current_node = node_id
             self.log_node("Executing", node_id)
-            if self.ctx.get("session_id"):
+            session_id = self.ctx.get("session_id")
+            if session_id:
                 await send_to_websocket(
-                    self.ctx.get("session_id"),
+                    session_id,
                     {
                         "type": "tool_call_progress",
                         "tool_call_id": self.ctx.get("tool_call_id"),
-                        "session_id": self.ctx.get("session_id"),
+                        "session_id": session_id,
                         "update": f"Executing {self.get_node_title(node_id)}",
                     },
                 )
         return True
 
-    async def on_cached(self, data):
+    async def on_cached(self, data: dict[str, Any]) -> None:
         nodes = data["nodes"]
         for n in nodes:
             self.remaining_nodes.discard(n)
             self.log_node("Cached", n)
         self.update_overall_progress()
 
-    async def on_progress(self, data):
-        node = data["node"]
-        if self.ctx.get("session_id"):
+    async def on_progress(self, data: dict[str, Any]) -> None:
+        node: str = data["node"]
+        session_id = self.ctx.get("session_id")
+        if session_id:
             await send_to_websocket(
-                self.ctx.get("session_id"),
+                session_id,
                 {
                     "type": "tool_call_progress",
                     "tool_call_id": self.ctx.get("tool_call_id"),
-                    "session_id": self.ctx.get("session_id"),
+                    "session_id": session_id,
                     "update": f"Executing {self.get_node_title(node)} {round(data['value'] / data['max'] * 100)}%",
                 },
             )
-        if self.progress_node != node:
-            self.progress_node = node
-            if self.progress_task:
-                self.progress.remove_task(self.progress_task)
+        if self.progress is not None:
+            if self.progress_node != node:
+                self.progress_node = node
+                if self.progress_task:
+                    self.progress.remove_task(self.progress_task)
 
-            self.progress_task = self.progress.add_task(
-                self.get_node_title(node), total=data["max"], progress_type="node"
-            )
+                self.progress_task = self.progress.add_task(
+                    self.get_node_title(node), total=data["max"], progress_type="node"
+                )
 
-        self.progress.update(self.progress_task, completed=data["value"])
+            self.progress.update(self.progress_task, completed=data["value"])
 
-    async def on_executed(self, data):
+    async def on_executed(self, data: dict[str, Any]) -> None:
         self.remaining_nodes.discard(data["node"])
         self.update_overall_progress()
 
@@ -335,28 +344,30 @@ class WorkflowExecution:
         for gif in output.get("gifs", []):
             self.outputs.append(self.format_image_path(gif))
 
+        session_id = self.ctx.get("session_id") or ""
         await send_to_websocket(
-            self.ctx.get("session_id"),
+            session_id,
             {
                 "type": "tool_call_progress",
                 "tool_call_id": self.ctx.get("tool_call_id"),
-                "session_id": self.ctx.get("session_id"),
+                "session_id": session_id,
                 "update": "",  # clear the progress update section by send empty string
             },
         )
 
-    async def on_error(self, data):
+    async def on_error(self, data: dict[str, Any]) -> None:
         pprint(
             f"[bold red]Error running workflow\n{json.dumps(data, indent=2)}[/bold red]"
         )
+        session_id = self.ctx.get("session_id") or ""
         await send_to_websocket(
-            self.ctx.get("session_id"),
+            session_id,
             {"type": "error", "error": json.dumps(data, indent=2)},
         )
         raise Exception(json.dumps(data, indent=2))
 
 
-async def upload_image(image, base_url, filename=None, subfolder='jaaz'):
+async def upload_image(image: Any, base_url: str, filename: Optional[str] = None, subfolder: str = 'jaaz') -> str:
     # Create a tuple with (filename, file_content) for proper multipart upload
     files = {"image": (filename, image)}
     data = {"type": "input", "subfolder": subfolder, "overwrite": "false"}

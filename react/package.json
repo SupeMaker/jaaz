@@ -68,7 +68,6 @@
     "react-dom": "^19.1.0",
     "react-i18next": "^15.5.2",
     "react-markdown": "^10.1.0",
-    "react-markdown-editor-lite": "^1.3.4",
     "react-photo-view": "^1.2.7",
     "react-resizable-panels": "^3.0.2",
     "remark-gfm": "^4.0.1",
@@ -79,6 +78,23 @@
     "tldraw": "^3.13.1",
     "tw-animate-css": "^1.2.4",
     "zustand": "^5.0.5"
+  },
+  "overrides": {
+    "@excalidraw/excalidraw": {
+      "@radix-ui/react-tabs": "^1.1.0",
+      "@radix-ui/primitive": "^1.1.0",
+      "@radix-ui/react-primitive": "^2.0.0",
+      "@radix-ui/react-slot": "^1.1.0",
+      "@radix-ui/react-presence": "^1.1.0",
+      "@radix-ui/react-direction": "^1.1.0",
+      "@radix-ui/react-id": "^1.1.0",
+      "@radix-ui/react-roving-focus": "^1.1.0",
+      "@radix-ui/react-collection": "^1.1.0",
+      "@radix-ui/react-use-callback-ref": "^1.1.0",
+      "@radix-ui/react-use-controllable-state": "^1.1.0",
+      "@radix-ui/react-compose-refs": "^1.1.0",
+      "@radix-ui/react-use-layout-effect": "^1.1.0"
+    }
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

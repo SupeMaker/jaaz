@@ -1,0 +1,63 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+  "title": "Chat Tools",
+  "content": "Type @ in your prompt to mention AI models, Brand Kits, or elements on the Canvas. The Agent will use only those resources as context for the current conversation. Unlike Select AI Models, which sets a soft preference, an @ mention is a high-priority instruction that overrides preferences.\n\nWeb Search integrates real-time web data into your design context, allowing the Agent to reference up-to-date information, current trends, visual inspiration, and design workflows. You can trigger it by clicking the icon, typing a search prompt, or pasting a public URL.\n\nMethod 1: Turn on Web Search\n\nMethod 2: Prompt for Semantic Search\n\nMethod 3: Drop a Public Web Link\n\nLovart offers two modes that control how the Agent approaches a request. In Thinking Mode, the Agent reasons longer and returns comprehensive, structured solutions. In Fast Mode, the Agent generates multiple creative options quickly for rapid exploration.\n\nVoice Mode lets you communicate with the Agent by speaking — generate, edit, and ask questions with your voice.\n\nInstall the Lovart Skill into your OpenClaw environment, authenticate with your Lovart keys, and chat with your Lovart Agent wherever your OpenClaw runs. You can then generate AI images directly in your OpenClaw workspace using Lovart's creative Agent.\n\nSee the Lovart OpenClaw User Guide for details.\n\nChat History lists every session you've had inside a project, so you can revisit a past conversation.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Chat Tools",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Mention",
+      "id": "386e71e4d01e"
+    },
+    {
+      "level": "h3",
+      "text": "Web Search",
+      "id": "6dd4cd7791b9"
+    },
+    {
+      "level": "h3",
+      "text": "Thinking & Fast Mode",
+      "id": "b937f7b7e773"
+    },
+    {
+      "level": "h3",
+      "text": "Voice Mode",
+      "id": "63b344088636"
+    },
+    {
+      "level": "h3",
+      "text": "OpenClaw",
+      "id": "b0d563af833b"
+    },
+    {
+      "level": "h3",
+      "text": "Chat History",
+      "id": "184e12f69723"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

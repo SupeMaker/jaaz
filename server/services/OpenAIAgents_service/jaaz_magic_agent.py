@@ -117,7 +117,8 @@ async def create_jaaz_response(messages: List[Dict[str, Any]], session_id: str =
                 filename = f'{file_id}.{extension}'
 
                 # 保存图片到画布
-                image_url = await save_image_to_canvas(session_id, canvas_id, filename, mime_type, width, height)
+                saved_result = await save_image_to_canvas(session_id, canvas_id, filename, mime_type, width, height)
+                image_url = saved_result.get("image_url", "")
                 print(f"✨ 图片已保存到画布: {filename}")
             except Exception as e:
                 print(f"❌ 保存图片到画布失败: {e}")

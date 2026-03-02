@@ -1,0 +1,58 @@
+{
+  "url": "https://www.lovart.ai/zh/docs",
+  "title": "How Lovart Works",
+  "content": "Lovart is an AI design agent that turns your ideas into polished creative design (product shots, social posts, marketing campaign kits, brand videos, and more) in minutes.\n\nMost design products give you tools. Lovart gives you finished outcomes. You describe what you need, and Lovart handles the end-to-end creative process: picking models, generating assets, and editing assets with AI, so you get production-ready files fast and easy.\n\nYou work with Lovart the way you'd work with a designer:\n\nIf you're producing a common output (an Instagram post, a YouTube thumbnail, a product listing, a video ad) but don't know or don't want to prompt, you can start with our one-click Skills.\n\nLovart Skills are intelligent workflows tuned for specific creative tasks. When you pick a Skill, the Agent knows what it needs to produce, asks you for anything missing, and moves through the steps automatically to deliver a finished output. Unlike a free-form prompt, a Skill encodes prompt best practices, professional design guidelines, and multi-step chains, so you can follow the Agent's lead.\n\nAvailable Skill Categories\n\nJump to Lovart Skills for a full feature description.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "How Lovart Works",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "The Core Idea",
+      "id": "a775659cd6eb"
+    },
+    {
+      "level": "h3",
+      "text": "What's Inside",
+      "id": "f4d5675e5676"
+    },
+    {
+      "level": "h3",
+      "text": "Go Faster With One-Click Skills",
+      "id": "5a4beac683e5"
+    },
+    {
+      "level": "h3",
+      "text": "Pro Tips",
+      "id": "88ead4e56c1d"
+    },
+    {
+      "level": "h3",
+      "text": "Next Steps",
+      "id": "5b750227567d"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

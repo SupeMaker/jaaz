@@ -1,22 +1,20 @@
 import React, { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { ChevronDown, Component } from 'lucide-react'
+import { ChevronDown, Check, Sparkles, ImageIcon, Video, FileText, Zap } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu'
 import { Switch } from '@/components/ui/switch'
-import { Checkbox } from '@/components/ui/checkbox'
 import { useTranslation } from 'react-i18next'
 import { useConfigs } from '@/contexts/configs'
 import { ModelInfo, ToolInfo } from '@/api/model'
 import { PROVIDER_NAME_MAPPING } from '@/constants'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '@/lib/utils'
 
 interface ModelSelectorV3Props {
   onModelToggle?: (modelId: string, checked: boolean) => void
@@ -44,30 +42,23 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
   const initialAutoMode = allTools.length > 0 && selectedTools.length === allTools.length
   const [autoMode, setAutoMode] = useState(initialAutoMode)
 
-  // Group models by provider
-  const groupModelsByProvider = (models: typeof allTools) => {
-    const grouped: { [provider: string]: typeof allTools } = {}
-    models?.forEach((model) => {
-      if (!grouped[model.provider]) {
-        grouped[model.provider] = []
+  const hasType = (
+    modelType: ModelInfo['type'],
+    target: 'text' | 'image' | 'video'
+  ) =>
+    Array.isArray(modelType) ? modelType.includes(target) : modelType === target
+
+  const groupItemsByProvider = <T extends { provider: string }>(items: T[]) => {
+    const grouped: { [provider: string]: T[] } = {}
+    items?.forEach((item) => {
+      if (!grouped[item.provider]) {
+        grouped[item.provider] = []
       }
-      grouped[model.provider].push(model)
+      grouped[item.provider].push(item)
     })
     return grouped
   }
 
-  const groupLLMsByProvider = (models: typeof textModels) => {
-    const grouped: { [provider: string]: typeof textModels } = {}
-    models?.forEach((model) => {
-      if (!grouped[model.provider]) {
-        grouped[model.provider] = []
-      }
-      grouped[model.provider].push(model)
-    })
-    return grouped
-  }
-
-  // Sort providers to put Jaaz first
   const sortProviders = <T,>(grouped: { [provider: string]: T[] }) => {
     const sortedEntries = Object.entries(grouped).sort(([a], [b]) => {
       if (a === 'jaaz') return -1
@@ -77,35 +68,93 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
     return Object.fromEntries(sortedEntries)
   }
 
-  const groupedLLMs = sortProviders(groupLLMsByProvider(textModels))
-  const groupedTools = groupModelsByProvider(allTools)
+  const getModelsByType = (type: 'text' | 'image' | 'video') =>
+    (textModels || []).filter((model): model is ModelInfo & { type: NonNullable<ModelInfo['type']> } => {
+      const modelType = model.type
+      if (modelType === undefined) return false
+      return hasType(modelType, type)
+    })
 
-  // Filter tools by type
+  const groupedLLMs = sortProviders(groupItemsByProvider(getModelsByType('text')))
+  const groupedTools = sortProviders(groupItemsByProvider(allTools))
+
   const getToolsByType = (type: 'image' | 'video') => {
-    const filteredTools = allTools.filter(tool => tool.type === type)
-    return groupModelsByProvider(filteredTools)
+    const filteredTools = allTools.filter((tool) => tool.type === type)
+    return sortProviders(groupItemsByProvider(filteredTools))
   }
+
+  const getCurrentModels = () => {
+    if (activeTab === 'text') {
+      return groupedLLMs
+    }
+
+    const modelsByType = getModelsByType(activeTab)
+    const toolGroups = getToolsByType(activeTab)
+    // Convert models to ToolInfo-like items, but avoid duplicating entries
+    // that already exist in toolGroups (same provider and id).
+    const modelLikeItems = modelsByType
+      .map((model) => ({
+        provider: model.provider,
+        id: model.model,
+        display_name: model.model,
+        type: activeTab,
+      }) as ToolInfo)
+      .filter((m) => {
+        const providerTools = toolGroups[m.provider] || []
+        const existingIds = providerTools.map((t) => t.id)
+        return !existingIds.includes(m.id)
+      })
+
+    const modelItems = groupItemsByProvider(modelLikeItems)
+
+    // Merge tool and model groups so provider groups can contain both tools and multi-type models
+    const mergedGroups = { ...toolGroups }
+    for (const provider of Object.keys(modelItems)) {
+      mergedGroups[provider] = [
+        ...(mergedGroups[provider] || []),
+        ...modelItems[provider],
+      ]
+    }
+    return sortProviders(mergedGroups)
+  }
+
+  const getSelectedModelKey = (item: ModelInfo | ToolInfo) =>
+    'model' in item ? `${item.provider}:${item.model}` : `${item.provider}:${item.id}`
+
+  const getSelectedModelName = (item: ModelInfo | ToolInfo) =>
+    'model' in item ? item.model : item.display_name || item.id
 
   const handleModelToggle = (modelKey: string, checked: boolean) => {
     if (activeTab === 'text') {
-      // Text models are single select
-      const model = textModels?.find((m) => m.provider + ':' + m.model === modelKey)
+      const model = textModels?.find((m) => `${m.provider}:${m.model}` === modelKey)
       if (model) {
         setTextModel(model)
         localStorage.setItem('text_model', modelKey)
       }
     } else {
-      // Image and video models are multi select
       let newSelected: ToolInfo[] = []
-      const tool = allTools.find((m) => m.provider + ':' + m.id === modelKey)
+      const tool = allTools.find((m) => `${m.provider}:${m.id}` === modelKey)
+      const model = getModelsByType(activeTab).find(
+        (m) => `${m.provider}:${m.model}` === modelKey
+      )
 
       if (checked) {
         if (tool) {
           newSelected = [...selectedTools, tool]
+        } else if (model) {
+          newSelected = [
+            ...selectedTools,
+            {
+              provider: model.provider,
+              id: model.model,
+              display_name: model.model,
+              type: activeTab,
+            },
+          ]
         }
       } else {
         newSelected = selectedTools.filter(
-          (t) => t.provider + ':' + t.id !== modelKey
+          (t) => `${t.provider}:${t.id}` !== modelKey
         )
       }
 
@@ -113,11 +162,10 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
       localStorage.setItem(
         'disabled_tool_ids',
         JSON.stringify(
-          allTools.filter((t) => !newSelected.includes(t)).map((t) => t.id)
+          allTools.filter((t) => !newSelected.some((selected) => selected.provider === t.provider && selected.id === t.id)).map((t) => t.id)
         )
       )
 
-      // 更新auto模式状态
       const isAuto = newSelected.length === allTools.length
       setAutoMode(isAuto)
     }
@@ -126,51 +174,61 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
 
   const handleModelClick = (modelKey: string) => {
     if (activeTab === 'text') {
-      // Text models: always single select, no auto mode
-      const model = textModels?.find((m) => m.provider + ':' + m.model === modelKey)
+      const model = textModels?.find((m) => `${m.provider}:${m.model}` === modelKey)
       if (model) {
         setTextModel(model)
         localStorage.setItem('text_model', modelKey)
         onModelToggle?.(modelKey, true)
       }
-    } else {
-      // Image and video models
-      if (autoMode) {
-        // 如果当前是auto模式，切换到非auto模式并只选中点击的模型
-        setAutoMode(false)
-        const tool = allTools.find((m) => m.provider + ':' + m.id === modelKey)
-        if (tool) {
-          setSelectedTools([tool])
-          localStorage.setItem(
-            'disabled_tool_ids',
-            JSON.stringify(
-              allTools.filter((t) => t.id !== tool.id).map((t) => t.id)
-            )
-          )
+      return
+    }
+
+    if (autoMode) {
+      setAutoMode(false)
+      const tool = allTools.find((m) => `${m.provider}:${m.id}` === modelKey)
+      if (tool) {
+        setSelectedTools([tool])
+        localStorage.setItem(
+          'disabled_tool_ids',
+          JSON.stringify(allTools.filter((t) => t.id !== tool.id).map((t) => t.id))
+        )
+        onModelToggle?.(modelKey, true)
+      } else {
+        const model = getModelsByType(activeTab).find(
+          (m) => `${m.provider}:${m.model}` === modelKey
+        )
+        if (model) {
+          setSelectedTools([
+            {
+              provider: model.provider,
+              id: model.model,
+              display_name: model.model,
+              type: activeTab,
+            },
+          ])
           onModelToggle?.(modelKey, true)
         }
-      } else {
-        // 非auto模式，切换当前模型的选中状态
-        const isSelected = selectedTools.some(t => t.provider + ':' + t.id === modelKey)
-        handleModelToggle(modelKey, !isSelected)
       }
+      return
     }
+
+    const isSelected = selectedTools.some(
+      (t) => `${t.provider}:${t.id}` === modelKey
+    )
+    handleModelToggle(modelKey, !isSelected)
   }
 
   const handleAutoToggle = (enabled: boolean) => {
     if (activeTab === 'text') {
-      // Text models don't support auto mode
       return
     }
 
     if (enabled) {
-      // 开启auto模式时，选中所有工具模型
       setSelectedTools(allTools)
       localStorage.setItem('disabled_tool_ids', JSON.stringify([]))
     } else {
-      // 关闭auto模式时，默认选中image和video的第一个工具
-      const imageTools = allTools.filter(tool => tool.type === 'image')
-      const videoTools = allTools.filter(tool => tool.type === 'video')
+      const imageTools = allTools.filter((tool) => tool.type === 'image')
+      const videoTools = allTools.filter((tool) => tool.type === 'video')
 
       const firstImageTool = imageTools.length > 0 ? imageTools[0] : null
       const firstVideoTool = videoTools.length > 0 ? videoTools[0] : null
@@ -184,7 +242,7 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
         localStorage.setItem(
           'disabled_tool_ids',
           JSON.stringify(
-            allTools.filter((t) => !selectedToolsList.includes(t)).map((t) => t.id)
+            allTools.filter((t) => !selectedToolsList.some((selected) => selected.provider === t.provider && selected.id === t.id)).map((t) => t.id)
           )
         )
       }
@@ -197,27 +255,15 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
   const getSelectedModelsCount = () => {
     if (activeTab === 'text') {
       return textModel ? 1 : 0
-    } else {
-      return selectedTools.length
     }
+    return selectedTools.length
   }
 
-  // Get current models based on active tab
-  const getCurrentModels = () => {
-    if (activeTab === 'text') {
-      return groupedLLMs
-    } else {
-      return getToolsByType(activeTab)
-    }
-  }
-
-  // Check if a model is selected
   const isModelSelected = (modelKey: string) => {
     if (activeTab === 'text') {
       return textModel?.provider + ':' + textModel?.model === modelKey
-    } else {
-      return selectedTools.some(t => t.provider + ':' + t.id === modelKey)
     }
+    return selectedTools.some((t) => `${t.provider}:${t.id}` === modelKey)
   }
 
   // Get provider display info
@@ -238,44 +284,54 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
-        <Button
-          size={'sm'}
-          variant="outline"
-          className={`w-fit max-w-[40%] justify-between overflow-hidden ${autoMode
-            ? 'bg-background border-border text-muted-foreground'
-            : 'text-primary border-green-200 bg-green-50'
+        <button
+          className={`group inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer select-none
+            ${autoMode
+              ? 'bg-primary/8 text-primary border border-primary/15 hover:bg-primary/12 hover:border-primary/25'
+              : 'bg-primary/12 text-primary border border-primary/25 hover:bg-primary/18 hover:border-primary/35'
             }`}
         >
           {autoMode ? (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 7l6 0" /><path d="M17 4l0 6" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 7l6 0" /><path d="M17 4l0 6" /></svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="icon icon-tabler icons-tabler-filled icon-tabler-apps"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 3h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M9 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M19 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M17 3a1 1 0 0 1 .993 .883l.007 .117v2h2a1 1 0 0 1 .117 1.993l-.117 .007h-2v2a1 1 0 0 1 -1.993 .117l-.007 -.117v-2h-2a1 1 0 0 1 -.117 -1.993l.117 -.007h2v-2a1 1 0 0 1 1 -1z" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="icon icon-tabler icons-tabler-filled icon-tabler-apps"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 3h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M9 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M19 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M17 3a1 1 0 0 1 .993 .883l.007 .117v2h2a1 1 0 0 1 .117 1.993l-.117 .007h-2v2a1 1 0 0 1 -1.993 .117l-.007 -.117v-2h-2a1 1 0 0 1 -.117 -1.993l.117 -.007h2v-2a1 1 0 0 1 1 -1z" /></svg>
           )}
-        </Button>
+          <span>{autoMode ? t('chat:modelSelector.auto') : `${getSelectedModelsCount()} ${activeTab}`}</span>
+          <ChevronDown className="size-3 opacity-40 group-hover:opacity-70 transition-opacity" />
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-96 select-none">
+      <DropdownMenuContent className="w-96 select-none p-0 overflow-hidden rounded-xl border-border/50 shadow-xl shadow-black/10">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b">
-          <div>{t('chat:modelSelector.title')}</div>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-muted/30">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{t('chat:modelSelector.auto')}</span>
+            <Sparkles className="size-3.5 text-primary" />
+            <span className="text-sm font-semibold">{t('chat:modelSelector.title')}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              'text-xs transition-colors',
+              autoMode ? 'text-primary font-medium' : 'text-muted-foreground'
+            )}>
+              {t('chat:modelSelector.auto')}
+            </span>
             <Switch
               checked={autoMode}
               onCheckedChange={handleAutoToggle}
-            // disabled={activeTab === 'text'}
+              className="scale-90"
             />
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex p-1 bg-muted rounded-lg mx-4 my-2">
+        <div className="flex p-1.5 bg-muted/40 mx-3 my-2 rounded-lg">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-3 py-1 rounded-md text-sm font-medium transition-colors cursor-pointer ${activeTab === tab.id
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+              className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer
+                ${activeTab === tab.id
+                  ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50'
+                  : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
               {tab.label}
@@ -285,48 +341,77 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
 
         {/* Models List */}
         <ScrollArea>
-          <div className="max-h-80 h-80 px-4 pb-4 select-none">
+          <div className="max-h-80 h-80 px-2.5 pb-3 select-none">
             {Object.entries(getCurrentModels()).map(([provider, providerModels], index, array) => {
               const providerInfo = getProviderDisplayInfo(provider)
               const isLastGroup = index === array.length - 1
               return (
                 <DropdownMenuGroup key={provider}>
-                  <DropdownMenuLabel className="text-xs font-medium text-muted-foreground px-0 py-2">
-                    <div className="flex items-center gap-2">
+                  <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider px-2 py-2 flex items-center gap-2">
+                    {providerInfo.icon ? (
                       <img
                         src={providerInfo.icon}
                         alt={providerInfo.name}
-                        className="w-4 h-4 rounded-full"
+                        className="w-3.5 h-3.5 rounded-full ring-1 ring-border/30"
                       />
-                      {providerInfo.name}
-                    </div>
+                    ) : (
+                      <div className="w-3.5 h-3.5 rounded-full bg-muted ring-1 ring-border/30" />
+                    )}
+                    {providerInfo.name}
                   </DropdownMenuLabel>
                   {providerModels.map((model: ModelInfo | ToolInfo) => {
-                    const modelKey = activeTab === 'text'
-                      ? model.provider + ':' + (model as ModelInfo).model
-                      : model.provider + ':' + (model as ToolInfo).id
-                    const modelName = activeTab === 'text'
-                      ? (model as ModelInfo).model
-                      : (model as ToolInfo).display_name || (model as ToolInfo).id
+                    const modelKey = getSelectedModelKey(model)
+                    const modelName = getSelectedModelName(model)
+                    const isSelected = isModelSelected(modelKey)
+                    const modelType = 'type' in model ? model.type : activeTab
 
                     return (
                       <div
                         key={modelKey}
-                        className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors mb-2 cursor-pointer"
+                        className={cn(
+                          'group flex items-center gap-2.5 px-2.5 py-2 rounded-lg mb-0.5 cursor-pointer transition-all duration-150',
+                          isSelected
+                            ? 'bg-primary/8 ring-1 ring-primary/15'
+                            : 'hover:bg-muted/60'
+                        )}
                         onClick={() => handleModelClick(modelKey)}
                       >
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{modelName}</div>
+                        {/* Type indicator */}
+                        <div className={cn(
+                          'flex items-center justify-center w-7 h-7 rounded-md shrink-0 transition-colors',
+                          isSelected
+                            ? 'bg-primary/15 text-primary'
+                            : 'bg-muted/70 text-muted-foreground group-hover:bg-muted'
+                        )}>
+                          {modelType === 'image' && <ImageIcon className="size-3.5" />}
+                          {modelType === 'video' && <Video className="size-3.5" />}
+                          {modelType === 'text' && <FileText className="size-3.5" />}
                         </div>
-                        <Checkbox
-                          checked={isModelSelected(modelKey)}
-                          className={`ml-4 ${autoMode && activeTab !== 'text' ? 'opacity-50' : ''}`}
-                          disabled={autoMode && activeTab !== 'text'}
-                        />
+
+                        {/* Name */}
+                        <div className="flex-1 min-w-0">
+                          <div className={cn(
+                            'text-sm truncate',
+                            isSelected ? 'font-medium text-primary' : 'font-normal text-foreground'
+                          )}>
+                            {modelName}
+                          </div>
+                        </div>
+
+                        {/* Selection indicator */}
+                        <div className={cn(
+                          'flex items-center justify-center w-4 h-4 rounded-full shrink-0 transition-all',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground scale-100'
+                            : 'border border-border/60 scale-90 opacity-0 group-hover:opacity-100',
+                          autoMode && activeTab !== 'text' && 'opacity-40'
+                        )}>
+                          {isSelected && <Check className="size-3" strokeWidth={3} />}
+                        </div>
                       </div>
                     )
                   })}
-                  {!isLastGroup && <DropdownMenuSeparator className="my-2" />}
+                  {!isLastGroup && <DropdownMenuSeparator className="my-1.5 opacity-50" />}
                 </DropdownMenuGroup>
               )
             })}

@@ -203,6 +203,8 @@ def build_tool(wf: Dict[str, Any]) -> BaseTool:
 
             # update the canvas data, add the new image element
             canvas_data = await db_service.get_canvas_data(canvas_id)
+            if canvas_data is None:
+                canvas_data = {}
             if "data" not in canvas_data:
                 canvas_data["data"] = {}
             if "elements" not in canvas_data["data"]:

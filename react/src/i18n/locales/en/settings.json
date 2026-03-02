@@ -96,6 +96,27 @@
     "workflows": "Workflows",
     "editWorkflow": "Edit Workflow"
   },
+  "brand": {
+    "title": "Brand Settings",
+    "logo": "Brand Logo",
+    "logoDescription": "Upload brand logo, subsequent generation will follow brand guidelines",
+    "colors": "Brand Palette",
+    "colorsDescription": "Add brand primary colors to constrain generation consistency",
+    "addColor": "Add Color",
+    "fonts": "Brand Fonts",
+    "fontsDescription": "Set brand preferred fonts",
+    "primaryFont": "Primary Font",
+    "secondaryFont": "Secondary Font",
+    "brandName": "Brand Name",
+    "brandNamePlaceholder": "Enter brand name",
+    "uploadLogo": "Upload Logo",
+    "removeLogo": "Remove Logo",
+    "colorHex": "Hex Value",
+    "colorName": "Color Name",
+    "removeColor": "Remove Color",
+    "save": "Save Brand Settings",
+    "saved": "Brand settings saved"
+  },
   "saveSettings": "Save Settings",
   "close": "Close",
   "cancel": "Cancel"

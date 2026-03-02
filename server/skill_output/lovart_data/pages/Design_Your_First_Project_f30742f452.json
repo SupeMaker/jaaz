@@ -1,0 +1,63 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+  "title": "Design Your First Project",
+  "content": "The fastest way to see what Lovart can do is to run one of the ready-made quickstart projects on your homepage. Click one, hit generate, and watch a finished asset land on the Canvas. No prompt writing required.\n\nJump to Export Formats for full export format details.\n\nYou've finished the Getting Started flow. Next:",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Design Your First Project",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Try a Quickstart Project",
+      "id": "b0829000bdbf"
+    },
+    {
+      "level": "h3",
+      "text": "Generate Your First Image",
+      "id": "3a579e0df80c"
+    },
+    {
+      "level": "h3",
+      "text": "Edit Your First Image",
+      "id": "6c128e2ecd5c"
+    },
+    {
+      "level": "h3",
+      "text": "Turn Your Image Into a Video",
+      "id": "a47a2f9244c1"
+    },
+    {
+      "level": "h3",
+      "text": "Export and Publish",
+      "id": "a29812efdf4a"
+    },
+    {
+      "level": "h3",
+      "text": "Next Steps",
+      "id": "a75ce4f2520a"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

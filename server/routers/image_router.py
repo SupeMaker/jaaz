@@ -9,16 +9,16 @@ from io import BytesIO
 import os
 from fastapi import APIRouter, HTTPException, UploadFile, File
 import httpx
-import aiofiles
 from mimetypes import guess_type
 from utils.http_client import HttpClient
+from typing import Any
 
 router = APIRouter(prefix="/api")
 os.makedirs(FILES_DIR, exist_ok=True)
 
 # 上传图片接口，支持表单提交
 @router.post("/upload_image")
-async def upload_image(file: UploadFile = File(...), max_size_mb: float = 3.0):
+async def upload_image(file: UploadFile = File(...), max_size_mb: float = 3.0) -> dict[str, Any]:
     print('🦄upload_image file', file.filename)
     # 生成文件 ID 和文件名
     file_id = generate_file_id()
@@ -121,7 +121,8 @@ def compress_image(img: Image.Image, max_size_mb: float) -> bytes:
     # If still too large, try reducing dimensions
     original_width, original_height = img.size
     scale_factor = 0.8
-    
+    resized_img = img  # Initialize fallback
+
     while scale_factor > 0.3:
         new_width = int(original_width * scale_factor)
         new_height = int(original_height * scale_factor)
@@ -146,7 +147,7 @@ def compress_image(img: Image.Image, max_size_mb: float) -> bytes:
 
 # 文件下载接口
 @router.get("/file/{file_id}")
-async def get_file(file_id: str):
+async def get_file(file_id: str) -> FileResponse:
     file_path = os.path.join(FILES_DIR, f'{file_id}')
     print('🦄get_file file_path', file_path)
     if not os.path.exists(file_path):
@@ -155,7 +156,7 @@ async def get_file(file_id: str):
 
 
 @router.post("/comfyui/object_info")
-async def get_object_info(data: dict):
+async def get_object_info(data: dict[str, Any]) -> Any:
     url = data.get('url', '')
     if not url:
         raise HTTPException(status_code=400, detail="URL is required")

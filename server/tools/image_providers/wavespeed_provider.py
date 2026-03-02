@@ -22,16 +22,16 @@ class WavespeedProvider(ImageProviderBase):
     def _build_headers(self) -> dict[str, str]:
         """Build request headers"""
         config = config_service.app_config.get('wavespeed', {})
-        api_key = str(config.get("api_key", ""))
-        api_url = str(config.get("url", ""))
+        self._api_key = str(config.get("api_key", ""))
+        self._api_url = str(config.get("url", ""))
         channel = os.environ.get('WAVESPEED_CHANNEL', 'jaaz_main')
 
-        if not api_key:
+        if not self._api_key:
             raise ValueError("WaveSpeed API key is not configured")
-        if not api_url:
+        if not self._api_url:
             raise ValueError("WaveSpeed API URL is not configured")
         return {
-            'Authorization': f'Bearer {api_key}',
+            'Authorization': f'Bearer {self._api_key}',
             'Content-Type': 'application/json',
             'channel': channel,
         }
@@ -115,7 +115,7 @@ class WavespeedProvider(ImageProviderBase):
             payload = self._build_payload(prompt, input_images, **kwargs)
             request_model = self._get_model_for_request(model, input_images)
 
-            endpoint = f"{self.api_url.rstrip('/')}/{request_model}"
+            endpoint = f"{self._api_url.rstrip('/')}/{request_model}"
 
             async with HttpClient.create_aiohttp() as session:
                 async with session.post(endpoint, json=payload, headers=headers) as response:

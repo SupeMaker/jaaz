@@ -1,0 +1,43 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+  "title": "Agent Skills",
+  "content": "Lovart Skills are intelligent workflows tuned for specific creative tasks. When you pick a Skill, the Agent knows what it needs to produce, asks you for anything missing, and moves through the steps automatically to deliver a finished output. Unlike a free-form prompt, a Skill encodes prompt best practices, professional design guidelines, and multi-step chains, so you can follow the Agent's lead.\n\nAvailable Skill Categories\n\nCustom Skills distill any conversation into a reusable Skill, so you can rerun the same workflow on new inputs without prompting from scratch. Use it to lock in a process you've already proven, and build a personal library of workflows over time.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Agent Skills",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Lovart Skills",
+      "id": "aa9126e0113d"
+    },
+    {
+      "level": "h3",
+      "text": "Custom Skills",
+      "id": "af17e86bce34"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}

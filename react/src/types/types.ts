@@ -61,11 +61,13 @@ export enum EAgentState {
   ERROR = 'ERROR',
 }
 
+export type ModelType = 'text' | 'image' | 'video'
+
 export type LLMConfig = {
   models: Record<
     string,
     {
-      type?: 'text' | 'image' | 'video'
+      type?: ModelType | ModelType[]
       is_custom?: boolean
       is_disabled?: boolean
     }
@@ -95,8 +97,11 @@ export type Session = {
   updated_at: string
 }
 
+export type ModelType = 'text' | 'image' | 'video'
+
 export type Model = {
   provider: string
   model: string
   url: string
+  type?: ModelType | ModelType[]
 }

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal, TypedDict
+from typing import Literal, List, TypedDict, Union
 
 class LLMConfig(BaseModel):
     model: str
@@ -15,4 +15,4 @@ class ModelInfo(TypedDict):
     provider: str
     model: str # For tool type, it is the function name
     url: str
-    type: Literal['text', 'image', 'tool', 'video']
+    type: Union[Literal['text', 'image', 'video'], List[Literal['text', 'image', 'video']]]

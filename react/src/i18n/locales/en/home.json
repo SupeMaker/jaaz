@@ -1,7 +1,53 @@
 {
-  "title": "Hello, Jaaz!",
-  "subtitle": "Ready to turn your ideas into art?",
+  "title": "Let Inspiration Flow Naturally",
+  "subtitle": "Complete professional design through conversation. AI agents orchestrate multiple models and deliver complete design results",
   "allProjects": "All Projects",
   "noCanvases": "No canvases yet",
-  "newCanvas": "Untitled"
+  "newCanvas": "Untitled",
+  "taskTypes": {
+    "image": "Image Generation",
+    "design": "Poster Design",
+    "brand": "Brand Design",
+    "illustration": "Illustration",
+    "ecommerce": "E-commerce",
+    "video": "Video Generation"
+  },
+  "taskTypeDescriptions": {
+    "image": "AI-powered high-quality image generation in various styles",
+    "design": "Marketing posters, event visuals and extensions",
+    "brand": "Logo, VI, brand palette all-in-one design",
+    "illustration": "Character, scene, and picture book illustration",
+    "ecommerce": "Product detail pages, ads, packaging design",
+    "video": "Text-to-video, image-to-video, storyboard"
+  },
+  "startCreating": "Start Creating",
+  "viewCapabilities": "View Capabilities",
+  "features": {
+    "visualContext": "Visual Context",
+    "visualContextDesc": "Understand image content, generate precisely",
+    "spatialPrompt": "Spatial Prompt",
+    "spatialPromptDesc": "Precise control of composition and layout",
+    "canvasGeneration": "Canvas Generation",
+    "canvasGenerationDesc": "Design through conversation, real-time preview",
+    "localRefine": "Local Refinement",
+    "localRefineDesc": "Click elements, modify precisely",
+    "smartLayers": "Smart Layers",
+    "smartLayersDesc": "Subject, background, text layered and controllable",
+    "batchExport": "Batch Export",
+    "batchExportDesc": "Multi-format multi-size one-click output"
+  },
+  "multimodal": {
+    "title": "Multi-modal Output",
+    "subtitle": "Image, video, audio, script, 3D, brand assets generated in one place",
+    "image": "Image",
+    "video": "Video",
+    "audio": "Audio",
+    "script": "Script",
+    "3d": "3D",
+    "brand": "Brand"
+  },
+  "chatCanvas": {
+    "title": "ChatCanvas Infinite Canvas",
+    "subtitle": "Chat, reference images, generated results, and edit actions all on the same canvas, maintaining context"
+  }
 }

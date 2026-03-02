@@ -2,7 +2,7 @@ import { saveCanvas } from '@/api/canvas'
 import { useCanvas } from '@/contexts/canvas'
 import useDebounce from '@/hooks/use-debounce'
 import { useTheme } from '@/hooks/use-theme'
-import { eventBus } from '@/lib/event'
+import { eventBus, TCanvasImageAddedEvent } from '@/lib/event'
 import * as ISocket from '@/types/socket'
 import { CanvasData } from '@/types/types'
 import { Excalidraw, convertToExcalidrawElements } from '@excalidraw/excalidraw'
@@ -55,7 +55,7 @@ const CanvasExcali: React.FC<CanvasExcaliProps> = ({
     if (!appState) return
 
     // Check if any selected element is embeddable type
-    const selectedElements = elements.filter((element) => 
+    const selectedElements = elements.filter((element) =>
       appState.selectedElementIds[element.id]
     )
     const hasEmbeddableSelected = selectedElements.some(
@@ -130,11 +130,11 @@ const CanvasExcali: React.FC<CanvasExcaliProps> = ({
 
   // 添加自定义类名以便应用我们的CSS修复
   const excalidrawClassName = `excalidraw-custom ${theme === 'dark' ? 'excalidraw-dark-fix-wm76394yjopk' : 'excalidraw-wm76394yjopk'}`
-  
+
   // 在深色模式下使用自定义主题设置，避免使用默认的滤镜
   // 这样可以确保颜色在深色模式下正确显示
   const customTheme = theme === 'dark' ? 'light' : theme
-  
+
   // 在组件挂载和主题变化时设置深色模式下的背景色
   useEffect(() => {
     if (excalidrawAPI && theme === 'dark') {
@@ -188,6 +188,9 @@ const CanvasExcali: React.FC<CanvasExcaliProps> = ({
 
       excalidrawAPI.updateScene({
         elements: [...(currentElements || []), unlockedImageElement],
+        appState: {
+          selectedElementIds: { [unlockedImageElement.id]: true },
+        },
       })
 
       localStorage.setItem(
@@ -388,14 +391,38 @@ const CanvasExcali: React.FC<CanvasExcaliProps> = ({
     [addVideoEmbed, canvasId]
   )
 
+  const handleCanvasImageAdded = useCallback(
+    (imageData: TCanvasImageAddedEvent) => {
+      console.log('👇 CanvasExcali received Canvas::ImageAdded:', imageData)
+
+      // Only handle if it's for this canvas
+      if (imageData.canvas_id !== canvasId) {
+        console.log('👇 Canvas image added not for this canvas, ignoring')
+        return
+      }
+
+      if (imageData.file?.mimeType?.startsWith('video/')) {
+        console.log(
+          '👇 Canvas::ImageAdded appears to be a video, ignoring in image handler.'
+        )
+        return
+      }
+
+      addImageToExcalidraw(imageData.element, imageData.file)
+    },
+    [addImageToExcalidraw, canvasId]
+  )
+
   useEffect(() => {
     eventBus.on('Socket::Session::ImageGenerated', handleImageGenerated)
     eventBus.on('Socket::Session::VideoGenerated', handleVideoGenerated)
+    eventBus.on('Canvas::ImageAdded', handleCanvasImageAdded)
     return () => {
       eventBus.off('Socket::Session::ImageGenerated', handleImageGenerated)
       eventBus.off('Socket::Session::VideoGenerated', handleVideoGenerated)
+      eventBus.off('Canvas::ImageAdded', handleCanvasImageAdded)
     }
-  }, [handleImageGenerated, handleVideoGenerated])
+  }, [handleImageGenerated, handleVideoGenerated, handleCanvasImageAdded])
 
   return (
     <Excalidraw

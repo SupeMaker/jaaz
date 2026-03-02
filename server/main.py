@@ -7,7 +7,7 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 print('Importing websocket_router')
 from routers.websocket_router import *  # DO NOT DELETE THIS LINE, OTHERWISE, WEBSOCKET WILL NOT WORK
 print('Importing routers')
-from routers import config_router, image_router, root_router, workspace, canvas, ssl_test, chat_router, settings, tool_confirmation
+from routers import config_router, image_router, root_router, workspace, canvas, ssl_test, chat_router, settings, tool_confirmation, direct_edit_router, canvas_features_router
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
@@ -56,6 +56,8 @@ app.include_router(image_router.router)
 app.include_router(ssl_test.router)
 app.include_router(chat_router.router)
 app.include_router(tool_confirmation.router)
+app.include_router(direct_edit_router.router)
+app.include_router(canvas_features_router.router)
 
 # Mount the React build directory
 react_build_dir = os.environ.get('UI_DIST_DIR', os.path.join(
@@ -100,8 +102,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=57988,
                         help='Port to run the server on')
+    parser.add_argument('--reload', action='store_true', default=False,
+                        help='Enable uvicorn auto-reload for development')
     args = parser.parse_args()
     import uvicorn
     print("🌟Starting server, UI_DIST_DIR:", os.environ.get('UI_DIST_DIR'))
 
-    uvicorn.run(socket_app, host="127.0.0.1", port=args.port)
+    # Pass reload flag to uvicorn when requested (enables hot-reload)
+    if args.reload:
+        # When using reload, uvicorn requires an import string so it can
+        # re-import the module in the reloader. Use "main:socket_app"
+        uvicorn.run("main:socket_app", host="127.0.0.1", port=args.port, reload=True)
+    else:
+        uvicorn.run(socket_app, host="127.0.0.1", port=args.port)

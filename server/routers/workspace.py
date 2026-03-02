@@ -4,22 +4,27 @@ import platform
 import subprocess
 import mimetypes
 from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse
 from services.config_service import USER_DATA_DIR
-from typing import List, Dict, Any
-import io
+from typing import Any
 
 router = APIRouter(prefix="/api")
 
 WORKSPACE_ROOT = os.path.join(USER_DATA_DIR, "workspace")
 
 @router.post("/update_file")
-async def update_file(request: Request):
+async def update_file(request: Request) -> dict[str, Any]:
+    path: str = ""
     try:
         data = await request.json()
         path = data["path"]
         full_path = os.path.join(WORKSPACE_ROOT, path)
+        # Prevent path traversal
+        real_path = os.path.realpath(full_path)
+        if not real_path.startswith(os.path.realpath(WORKSPACE_ROOT)):
+            return {"error": "Invalid file path", "path": path}
         content = data["content"]
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
         with open(full_path, "w") as f:
             f.write(content)
         return {"success": True}
@@ -27,7 +32,7 @@ async def update_file(request: Request):
         return {"error": str(e), "path": path}
 
 @router.post("/create_file")
-async def create_file(request: Request):
+async def create_file(request: Request) -> dict[str, str]:
     data = await request.json()
     rel_dir = data["rel_dir"]
     path = os.path.join(WORKSPACE_ROOT, rel_dir, 'Untitled.md')
@@ -49,14 +54,21 @@ async def create_file(request: Request):
     return {"path": os.path.relpath(candidate_path, WORKSPACE_ROOT)}
 
 @router.post("/delete_file")
-async def delete_file(request: Request):
+async def delete_file(request: Request) -> dict[str, bool]:
     data = await request.json()
     path = data["path"]
-    os.remove(path)
+    full_path = os.path.join(WORKSPACE_ROOT, path)
+    # Prevent path traversal
+    real_path = os.path.realpath(full_path)
+    if not real_path.startswith(os.path.realpath(WORKSPACE_ROOT)):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    os.remove(full_path)
     return {"success": True}
 
 @router.post("/rename_file")
-async def rename_file(request: Request):
+async def rename_file(request: Request) -> dict[str, Any]:
     try:
         data = await request.json()
         old_path = data["old_path"]
@@ -73,7 +85,8 @@ async def rename_file(request: Request):
         return {"error": str(e)}
 
 @router.post("/read_file")
-async def read_file(request: Request):
+async def read_file(request: Request) -> dict[str, Any]:
+    path: str = ""
     try:
         data = await request.json()
         path = data["path"]
@@ -88,11 +101,11 @@ async def read_file(request: Request):
         return {"error": str(e), "path": path}
 
 @router.get("/list_files_in_dir")
-async def list_files_in_dir(rel_path: str):
+async def list_files_in_dir(rel_path: str) -> list[dict[str, Any]]:
     try:
         full_path = os.path.join(WORKSPACE_ROOT, rel_path)
         files = os.listdir(full_path)
-        file_nodes = []
+        file_nodes: list[dict[str, Any]] = []
         for file in files:
             file_path = os.path.join(full_path, file)
             file_nodes.append({
@@ -111,7 +124,7 @@ async def list_files_in_dir(rel_path: str):
         return []
 
 @router.post("/open_folder_in_explorer")
-async def open_folder_in_explorer(request: Request):
+async def open_folder_in_explorer(request: Request) -> dict[str, Any]:
     """
     在系统文件浏览器中打开指定文件夹
     
@@ -159,7 +172,7 @@ async def open_folder_in_explorer(request: Request):
         raise HTTPException(status_code=500, detail=f"Error opening folder: {str(e)}")
 
 @router.get("/browse_filesystem")
-async def browse_filesystem(path: str = ""):
+async def browse_filesystem(path: str = "") -> dict[str, Any]:
     """
     浏览电脑任意位置的文件系统
     
@@ -181,7 +194,7 @@ async def browse_filesystem(path: str = ""):
         if not os.path.isdir(path):
             raise HTTPException(status_code=400, detail="Path is not a directory")
         
-        items = []
+        items: list[dict[str, Any]] = []
         
         try:
             # 获取目录下的所有项目
@@ -242,7 +255,7 @@ async def browse_filesystem(path: str = ""):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/get_media_files")
-async def get_media_files(path: str):
+async def get_media_files(path: str) -> list[dict[str, Any]]:
     """
     获取指定文件夹下的所有媒体文件（图片和视频）
     
@@ -256,7 +269,7 @@ async def get_media_files(path: str):
         if not os.path.exists(path) or not os.path.isdir(path):
             raise HTTPException(status_code=400, detail="Invalid directory path")
         
-        media_files = []
+        media_files: list[dict[str, Any]] = []
         
         try:
             for item in os.listdir(path):
@@ -289,7 +302,7 @@ async def get_media_files(path: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/get_file_thumbnail")
-async def get_file_thumbnail(file_path: str):
+async def get_file_thumbnail(file_path: str) -> dict[str, Any]:
     """
     获取文件的缩略图信息
     
@@ -353,7 +366,7 @@ def get_file_type(file_path: str) -> str:
         return "file"
 
 @router.get("/serve_file")
-async def serve_file(file_path: str):
+async def serve_file(file_path: str) -> FileResponse:
     """
     提供文件内容服务，用于在浏览器中预览图片和视频
     
@@ -391,7 +404,7 @@ async def serve_file(file_path: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/get_file_info")
-async def get_file_info(file_path: str):
+async def get_file_info(file_path: str) -> dict[str, Any]:
     """
     获取文件详细信息
     

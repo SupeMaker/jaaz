@@ -94,7 +94,7 @@ class DatabaseService:
             """, (session_id,))
             rows = await cursor.fetchall()
             
-            messages = []
+            messages: list[Any] = []
             for row in rows:
                 row_dict = dict(row)
                 if row_dict['message']:
@@ -126,7 +126,7 @@ class DatabaseService:
             rows = await cursor.fetchall()
             return [dict(row) for row in rows]
 
-    async def save_canvas_data(self, id: str, data: str, thumbnail: str = None):
+    async def save_canvas_data(self, id: str, data: str, thumbnail: Optional[str] = None) -> None:
         """Save canvas data"""
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("""
@@ -169,7 +169,7 @@ class DatabaseService:
             await db.execute("UPDATE canvases SET name = ? WHERE id = ?", (name, id))
             await db.commit()
 
-    async def create_comfy_workflow(self, name: str, api_json: str, description: str, inputs: str, outputs: str = None):
+    async def create_comfy_workflow(self, name: str, api_json: str, description: str, inputs: str, outputs: Optional[str] = None) -> None:
         """Create a new comfy workflow"""
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("""
@@ -192,7 +192,7 @@ class DatabaseService:
             await db.execute("DELETE FROM comfy_workflows WHERE id = ?", (id,))
             await db.commit()
 
-    async def get_comfy_workflow(self, id: int):
+    async def get_comfy_workflow(self, id: int) -> Any:
         """Get comfy workflow dict"""
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = sqlite3.Row
@@ -200,6 +200,10 @@ class DatabaseService:
                 "SELECT api_json FROM comfy_workflows WHERE id = ?", (id,)
             )
             row = await cursor.fetchone()
+
+        if row is None:
+            raise ValueError(f"Comfy workflow with id {id} not found")
+
         try:
             workflow_json = (
                 row["api_json"]

@@ -8,7 +8,8 @@
     "selectModel": "Please select a text model! Go to Settings to set your API keys if you haven't done so.",
     "selectTool": "Please go to settings to add image or video generation tools, or you won't be able to generate any images or videos!!",
     "enterPrompt": "Please enter a prompt",
-    "quantity": "Image Quantity"
+    "quantity": "Image Quantity",
+    "invalidSize": "Invalid size. Width and height must be at least 64px."
   },
   "messages": {
     "imagePositioning": "Go to image",
@@ -45,6 +46,24 @@
       "image": "Image",
       "video": "Video",
       "text": "Text"
+    }
+  },
+  "mcot": {
+    "title": "MCoT Reasoning",
+    "steps": {
+      "analysis": "Context Analysis",
+      "analysisDesc": "Parsing user intent and design requirements",
+      "audience": "Audience Profiling",
+      "audienceDesc": "Identifying target audience and use case",
+      "brand": "Brand Alignment",
+      "brandDesc": "Checking brand colors, fonts and guidelines",
+      "planning": "Task Planning",
+      "planningDesc": "Selecting models and decomposing subtasks",
+      "execution": "Executing Generation",
+      "executionImage": "Generating image assets with selected model",
+      "executionVideo": "Rendering video frames and motion",
+      "executionBrand": "Designing brand assets and visual system",
+      "executionDefault": "Running multi-agent pipeline"
     }
   }
 }

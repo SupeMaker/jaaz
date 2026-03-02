@@ -1,7 +1,53 @@
 {
-  "title": "你好，Jaaz！",
-  "subtitle": "准备好将你的想法变成艺术吗？",
+  "title": "让灵感，自然流动",
+  "subtitle": "用对话完成专业设计，AI 智能体为你自动编排多模型、交付完整设计成果",
   "allProjects": "所有项目",
   "noCanvases": "还没有画布",
-  "newCanvas": "未命名"
+  "newCanvas": "未命名",
+  "taskTypes": {
+    "image": "图片生成",
+    "design": "海报设计",
+    "brand": "品牌设计",
+    "illustration": "插画创作",
+    "ecommerce": "电商物料",
+    "video": "视频生成"
+  },
+  "taskTypeDescriptions": {
+    "image": "AI 生成高质量图像，支持多种风格",
+    "design": "营销海报、活动主视觉及延展",
+    "brand": "Logo、VI、品牌色板一站式设计",
+    "illustration": "角色、场景、绘本插画创作",
+    "ecommerce": "商品详情页、广告图、包装设计",
+    "video": "文生视频、图生视频、分镜故事板"
+  },
+  "startCreating": "开始创作",
+  "viewCapabilities": "查看能力",
+  "features": {
+    "visualContext": "视觉上下文",
+    "visualContextDesc": "理解图像内容，精准生成",
+    "spatialPrompt": "空间提示",
+    "spatialPromptDesc": "精确控制构图与布局",
+    "canvasGeneration": "画布生成",
+    "canvasGenerationDesc": "对话即设计，实时预览",
+    "localRefine": "局部精修",
+    "localRefineDesc": "点击元素，精准修改",
+    "smartLayers": "语义图层",
+    "smartLayersDesc": "主体、背景、文字分层可控",
+    "batchExport": "成套导出",
+    "batchExportDesc": "多格式多尺寸一键输出"
+  },
+  "multimodal": {
+    "title": "多模态输出",
+    "subtitle": "图像、视频、音频、脚本、3D、品牌资产一站式生成",
+    "image": "图像",
+    "video": "视频",
+    "audio": "音频",
+    "script": "脚本",
+    "3d": "3D",
+    "brand": "品牌"
+  },
+  "chatCanvas": {
+    "title": "ChatCanvas 无限画布",
+    "subtitle": "聊天、参考图、生成结果、编辑动作沉淀在同一画布，保持上下文"
+  }
 }

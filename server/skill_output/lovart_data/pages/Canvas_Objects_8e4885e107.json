@@ -1,0 +1,58 @@
+{
+  "url": "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+  "title": "Canvas Objects",
+  "content": "Import your images and videos directly onto the Canvas for selection and editing.\n\nFrames act as containers on the infinite Canvas — use them to structure multi-panel layouts, group related elements, or define artboards for specific export sizes. Add images, videos, text, or shapes inside a frame to keep related content together.\n\nShapes are flexible building blocks for your layout. Use them as masks, backgrounds, or graphic elements.\n\nDraw freehand vector lines on the Canvas with the Pencil tool.\n\nThe Text tool places editable text layers on the Canvas — headlines, body copy, labels, and more. Each layer sits independently on top of your design and supports font selection, sizing, weight, alignment, and hierarchy.",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Canvas Objects",
+      "id": ""
+    },
+    {
+      "level": "h3",
+      "text": "Add to Canvas",
+      "id": "e922b61f4714"
+    },
+    {
+      "level": "h3",
+      "text": "Frame",
+      "id": "13ee3cd1540b"
+    },
+    {
+      "level": "h3",
+      "text": "Shapes",
+      "id": "7917206b9097"
+    },
+    {
+      "level": "h3",
+      "text": "Pencil",
+      "id": "fb8e83cbf4ef"
+    },
+    {
+      "level": "h3",
+      "text": "Text",
+      "id": "da4ec3b9cfcb"
+    }
+  ],
+  "code_samples": [],
+  "patterns": [],
+  "links": [
+    "https://www.lovart.ai/zh/docs/getting-started/how-lovart-works",
+    "https://www.lovart.ai/zh/docs/getting-started/things-you-should-set-up-first",
+    "https://www.lovart.ai/zh/docs/getting-started/design-your-first-project",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/adding-references",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/selecting-ai-models",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/chat-tools",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/agent-skills",
+    "https://www.lovart.ai/zh/docs/how-to-prompt/other-things-you-can-prompt-to-create",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/basic-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/advanced-ai-editing",
+    "https://www.lovart.ai/zh/docs/edit-your-design/ai-transformation",
+    "https://www.lovart.ai/zh/docs/edit-your-design/canvas-objects",
+    "https://www.lovart.ai/zh/docs/edit-your-design/customize-your-canvas",
+    "https://www.lovart.ai/zh/docs/export-your-assets/export-formats",
+    "https://www.lovart.ai/zh/docs/reference/models-and-pricing",
+    "https://www.lovart.ai/zh/docs/reference/keyboard-shortcuts"
+  ]
+}
