@@ -38,10 +38,6 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { t } = useTranslation()
 
-  // 初始化时判断auto模式：如果所有工具都被选中，则为auto模式
-  const initialAutoMode = allTools.length > 0 && selectedTools.length === allTools.length
-  const [autoMode, setAutoMode] = useState(initialAutoMode)
-
   const hasType = (
     modelType: ModelInfo['type'],
     target: 'text' | 'image' | 'video'
@@ -81,6 +77,44 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
   const getToolsByType = (type: 'image' | 'video') => {
     const filteredTools = allTools.filter((tool) => tool.type === type)
     return sortProviders(groupItemsByProvider(filteredTools))
+  }
+
+  const getToolsByTypeFlat = (type: 'image' | 'video') =>
+    allTools.filter((tool) => tool.type === type)
+
+  const isAutoModeForTab = (tab: 'image' | 'video' | 'text') => {
+    if (tab === 'text') return false
+    const typeTools = getToolsByTypeFlat(tab)
+    if (typeTools.length === 0) return false
+    return typeTools.every((tool) =>
+      selectedTools.some((t) => t.provider === tool.provider && t.id === tool.id)
+    )
+  }
+
+  const autoMode = isAutoModeForTab(activeTab)
+
+  const getOtherTypeSelectedTools = (tab: 'image' | 'video') => {
+    const otherType = tab === 'image' ? 'video' : 'image'
+    const otherTypeTools = getToolsByTypeFlat(otherType)
+    return selectedTools.filter((t) =>
+      otherTypeTools.some((ot) => ot.provider === t.provider && ot.id === t.id)
+    )
+  }
+
+  const persistDisabledToolIds = (newSelected: ToolInfo[]) => {
+    localStorage.setItem(
+      'disabled_tool_ids',
+      JSON.stringify(
+        allTools
+          .filter(
+            (t) =>
+              !newSelected.some(
+                (selected) => selected.provider === t.provider && selected.id === t.id
+              )
+          )
+          .map((t) => t.id)
+      )
+    )
   }
 
   const getCurrentModels = () => {
@@ -159,15 +193,7 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
       }
 
       setSelectedTools(newSelected)
-      localStorage.setItem(
-        'disabled_tool_ids',
-        JSON.stringify(
-          allTools.filter((t) => !newSelected.some((selected) => selected.provider === t.provider && selected.id === t.id)).map((t) => t.id)
-        )
-      )
-
-      const isAuto = newSelected.length === allTools.length
-      setAutoMode(isAuto)
+      persistDisabledToolIds(newSelected)
     }
     onModelToggle?.(modelKey, checked)
   }
@@ -184,28 +210,30 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
     }
 
     if (autoMode) {
-      setAutoMode(false)
+      const otherSelected = getOtherTypeSelectedTools(activeTab)
       const tool = allTools.find((m) => `${m.provider}:${m.id}` === modelKey)
+      let newSelected: ToolInfo[] = []
       if (tool) {
-        setSelectedTools([tool])
-        localStorage.setItem(
-          'disabled_tool_ids',
-          JSON.stringify(allTools.filter((t) => t.id !== tool.id).map((t) => t.id))
-        )
+        newSelected = [...otherSelected, tool]
+        setSelectedTools(newSelected)
+        persistDisabledToolIds(newSelected)
         onModelToggle?.(modelKey, true)
       } else {
         const model = getModelsByType(activeTab).find(
           (m) => `${m.provider}:${m.model}` === modelKey
         )
         if (model) {
-          setSelectedTools([
+          newSelected = [
+            ...otherSelected,
             {
               provider: model.provider,
               id: model.model,
               display_name: model.model,
               type: activeTab,
             },
-          ])
+          ]
+          setSelectedTools(newSelected)
+          persistDisabledToolIds(newSelected)
           onModelToggle?.(modelKey, true)
         }
       }
@@ -223,31 +251,23 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
       return
     }
 
+    const typeTools = getToolsByTypeFlat(activeTab)
+    const otherSelected = getOtherTypeSelectedTools(activeTab)
+
+    let newSelected: ToolInfo[] = []
     if (enabled) {
-      setSelectedTools(allTools)
-      localStorage.setItem('disabled_tool_ids', JSON.stringify([]))
+      newSelected = [...otherSelected, ...typeTools]
     } else {
-      const imageTools = allTools.filter((tool) => tool.type === 'image')
-      const videoTools = allTools.filter((tool) => tool.type === 'video')
-
-      const firstImageTool = imageTools.length > 0 ? imageTools[0] : null
-      const firstVideoTool = videoTools.length > 0 ? videoTools[0] : null
-
-      const selectedToolsList: ToolInfo[] = []
-      if (firstImageTool) selectedToolsList.push(firstImageTool)
-      if (firstVideoTool) selectedToolsList.push(firstVideoTool)
-
-      if (selectedToolsList.length > 0) {
-        setSelectedTools(selectedToolsList)
-        localStorage.setItem(
-          'disabled_tool_ids',
-          JSON.stringify(
-            allTools.filter((t) => !selectedToolsList.some((selected) => selected.provider === t.provider && selected.id === t.id)).map((t) => t.id)
-          )
-        )
+      const firstTool = typeTools.length > 0 ? typeTools[0] : null
+      if (firstTool) {
+        newSelected = [...otherSelected, firstTool]
+      } else {
+        newSelected = otherSelected
       }
     }
-    setAutoMode(enabled)
+
+    setSelectedTools(newSelected)
+    persistDisabledToolIds(newSelected)
     onAutoToggle?.(enabled)
   }
 
@@ -307,19 +327,21 @@ const ModelSelectorV3: React.FC<ModelSelectorV3Props> = ({
             <Sparkles className="size-3.5 text-primary" />
             <span className="text-sm font-semibold">{t('chat:modelSelector.title')}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={cn(
-              'text-xs transition-colors',
-              autoMode ? 'text-primary font-medium' : 'text-muted-foreground'
-            )}>
-              {t('chat:modelSelector.auto')}
-            </span>
-            <Switch
-              checked={autoMode}
-              onCheckedChange={handleAutoToggle}
-              className="scale-90"
-            />
-          </div>
+          {activeTab !== 'text' && (
+            <div className="flex items-center gap-2">
+              <span className={cn(
+                'text-xs transition-colors',
+                autoMode ? 'text-primary font-medium' : 'text-muted-foreground'
+              )}>
+                {t('chat:modelSelector.auto')}
+              </span>
+              <Switch
+                checked={autoMode}
+                onCheckedChange={handleAutoToggle}
+                className="scale-90"
+              />
+            </div>
+          )}
         </div>
 
         {/* Tabs */}

@@ -51,6 +51,7 @@
     "editText": "编辑文字",
     "expand": "扩展画布",
     "redraw": "局部重绘",
+    "compose": "图像合成",
     "mockup": "Mockup",
     "download": "下载"
   },
@@ -107,7 +108,30 @@
     "failed": "Mockup 失败",
     "failedWithError": "Mockup 失败：{{error}}",
     "hint": "调整位置后点击应用",
-    "noDesign": "请选择设计图"
+    "noDesign": "请选择设计图",
+    "targetLabel": "样机",
+    "inlineHint": "将贴图拖拽到样机图上，或点击画布中的其他图片选中后，再拖到样机上自动贴合。",
+    "pickDesign": "贴图素材",
+    "dropToFit": "松开鼠标即可自动贴合到样机",
+    "autoFitting": "AI 自动贴合中...",
+    "dragToMockup": "拖到样机",
+    "canvasDragHint": "直接在画布上拖动贴图到样机区域。预览会随曲面弧度弯曲（如水杯侧壁）。",
+    "icLoraProcessing": "IC-LoRA 样机贴合中...",
+    "icLoraHint": "基于 In-Context LoRA Visual Identity Design：左=设计稿，右=样机，AI 生成自然贴合效果",
+    "curvePreview": "曲面弧度预览已启用"
+  },
+  "compose": {
+    "title": "图像合成",
+    "needTwoImages": "请至少选中 2 张图片",
+    "processing": "合成中...",
+    "completed": "合成完成",
+    "failed": "合成失败",
+    "failedWithError": "合成失败：{{error}}",
+    "dragToMove": "拖动移动",
+    "hint": "已按选中顺序编号 {{count}} 张图。可用编号引用，如「将第2张图合并到第1张中」或「将这些元素放在厨房场景中」。",
+    "placeholder": "例如：将第2张图合并到第1张中；将菜刀、电饭煲、碗放入厨房照片...",
+    "apply": "开始合成",
+    "shortcut": "Ctrl+Enter 提交"
   },
   "workMode": {
     "talkDesc": "用自然语言描述你的设计需求",

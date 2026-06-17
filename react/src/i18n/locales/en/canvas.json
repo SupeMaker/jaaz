@@ -51,6 +51,7 @@
     "editText": "Edit Text",
     "expand": "Expand",
     "redraw": "Redraw",
+    "compose": "Compose",
     "mockup": "Mockup",
     "download": "Download"
   },
@@ -107,7 +108,30 @@
     "failed": "Mockup failed",
     "failedWithError": "Mockup failed: {{error}}",
     "hint": "Adjust placement and apply",
-    "noDesign": "Please select a design image"
+    "noDesign": "Please select a design image",
+    "targetLabel": "Mockup target",
+    "inlineHint": "Drag a design onto the mockup, or click another canvas image to pick it, then drop on the mockup to auto-fit.",
+    "pickDesign": "Design stickers",
+    "dropToFit": "Release to auto-fit onto mockup",
+    "autoFitting": "AI auto-fitting...",
+    "dragToMockup": "Drag to mockup",
+    "canvasDragHint": "Drag stickers directly on the canvas onto the mockup. Preview curves to match rounded surfaces like cups.",
+    "icLoraProcessing": "IC-LoRA mockup fitting...",
+    "icLoraHint": "Powered by In-Context LoRA Visual Identity Design: design (left) + product (right) → natural mockup",
+    "curvePreview": "Curved surface preview active"
+  },
+  "compose": {
+    "title": "Image Composition",
+    "needTwoImages": "Please select at least 2 images",
+    "processing": "Composing images...",
+    "completed": "Composition completed",
+    "failed": "Composition failed",
+    "failedWithError": "Composition failed: {{error}}",
+    "dragToMove": "Drag to move",
+    "hint": "{{count}} images selected in order. Reference them by number, e.g. \"merge image 2 into image 1\" or \"place these elements in the kitchen\".",
+    "placeholder": "e.g., Merge image 2 into image 1, place knife/rice cooker/bowl into the kitchen photo...",
+    "apply": "Compose",
+    "shortcut": "Ctrl+Enter to submit"
   },
   "workMode": {
     "talkDesc": "Describe your design needs in natural language",

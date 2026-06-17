@@ -6,6 +6,8 @@ export type TCanvasAddImagesToChatEvent = {
   base64?: string
   width: number
   height: number
+  elementId?: string
+  order?: number
 }[]
 
 export type TCanvasMagicGenerateEvent = {
@@ -28,7 +30,7 @@ export type TCanvasTaskStatus = 'running' | 'success' | 'error'
 
 export type TCanvasTaskEvent = {
   id: string
-  type: 'edit' | 'inpaint' | 'mockup'
+  type: 'edit' | 'inpaint' | 'mockup' | 'compose'
   action?: string
   status: TCanvasTaskStatus
   message: string

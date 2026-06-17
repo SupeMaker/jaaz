@@ -2,10 +2,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { PROVIDER_NAME_MAPPING } from '@/constants'
-import { LLMConfig } from '@/types/types'
+import { LLMConfig, ModelType } from '@/types/types'
 import { useTranslation } from 'react-i18next'
+import { testProvider } from '@/api/config'
 import AddModelsList from './AddModelsList'
-import { Trash2, ChevronDown, ChevronUp, Loader2, CheckCircle2, XCircle, Zap, FileText, ImageIcon, Video } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Trash2, ChevronDown, ChevronUp, Loader2, CheckCircle2, XCircle, Zap, FileText, ImageIcon, Video, Power } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -63,7 +65,7 @@ export default function CommonSetting({
   }
 
   const handleModelsChange = (
-    models: Record<string, { type?: 'text' | 'image' | 'video' | 'audio' }>
+    models: Record<string, { type?: ModelType | ModelType[] }>
   ) => {
     onConfigChange(providerKey, {
       ...config,
@@ -77,17 +79,27 @@ export default function CommonSetting({
     }
   }
 
+  const handleToggleEnabled = (enabled: boolean) => {
+    onConfigChange(providerKey, {
+      ...config,
+      is_disabled: !enabled,
+    })
+  }
+
   const handleTestConnection = async () => {
+    if (config.is_disabled) {
+      toast.error(`${provider.name} is disabled`)
+      return
+    }
     setTestStatus('testing')
     try {
-      // Simulate connection test - in real app this would call an API
-      await new Promise((resolve) => setTimeout(resolve, 1200))
-      if (config.api_key && config.url) {
+      const result = await testProvider(providerKey, config)
+      if (result.status === 'success') {
         setTestStatus('success')
-        toast.success(`${provider.name} connection verified`)
+        toast.success(result.message || `${provider.name} connection verified`)
       } else {
         setTestStatus('failed')
-        toast.error(`${provider.name} needs API key and URL`)
+        toast.error(result.message || `Failed to connect to ${provider.name}`)
       }
     } catch (error) {
       setTestStatus('failed')
@@ -97,7 +109,10 @@ export default function CommonSetting({
   }
 
   return (
-    <div className="group rounded-xl border border-border/50 bg-background/50 overflow-hidden transition-all duration-200 hover:border-border/80 hover:shadow-sm">
+    <div className={cn(
+      'group rounded-xl border border-border/50 bg-background/50 overflow-hidden transition-all duration-200 hover:border-border/80 hover:shadow-sm',
+      config.is_disabled && 'opacity-60 grayscale-[0.5]'
+    )}>
       {/* Card Header */}
       <div className="flex items-center gap-3 p-4">
         {/* Provider Icon */}
@@ -170,6 +185,21 @@ export default function CommonSetting({
 
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* Enable/Disable Toggle */}
+          <div className="flex items-center gap-2 pr-2 border-r border-border/30">
+            <Switch
+              checked={!config.is_disabled}
+              onCheckedChange={handleToggleEnabled}
+              id={`${providerKey}-enabled`}
+            />
+            <Label
+              htmlFor={`${providerKey}-enabled`}
+              className="text-xs text-muted-foreground hidden sm:inline cursor-pointer"
+            >
+              {!config.is_disabled ? 'Enabled' : 'Disabled'}
+            </Label>
+          </div>
+
           {/* Test Connection */}
           <Button
             variant="ghost"
@@ -218,7 +248,7 @@ export default function CommonSetting({
       {/* Card Body */}
       {isExpanded && (
         <div className="px-4 pb-4 pt-0 space-y-3 border-t border-border/30">
-          <div className="grid gap-3 md:grid-cols-2 pt-3">
+          <div className="space-y-3 pt-3">
             {/* API URL */}
             <div className="space-y-1.5">
               <Label htmlFor={`${providerKey}-url`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">

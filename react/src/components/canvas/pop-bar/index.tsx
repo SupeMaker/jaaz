@@ -7,6 +7,7 @@ import {
 import { AnimatePresence } from 'motion/react'
 import { useRef, useState } from 'react'
 import CanvasPopbarContainer from './CanvasPopbarContainer'
+import { collectSelectedImagesInOrder } from '../utils/canvasImages'
 
 const CanvasPopbarWrapper = () => {
   const { excalidrawAPI } = useCanvas()
@@ -20,57 +21,52 @@ const CanvasPopbarWrapper = () => {
 
   excalidrawAPI?.onChange((elements, appState, files) => {
     const selectedIds = appState.selectedElementIds
-    if (Object.keys(selectedIds).length === 0) {
+    const selectedIdList = Object.keys(selectedIds)
+
+    if (selectedIdList.length === 0) {
       setPos(null)
       setShowAddToChat(false)
       setShowMagicGenerate(false)
       return
     }
 
-    const selectedImages = elements.filter(
-      (element) => element.type === 'image' && selectedIds[element.id]
-    ) as ExcalidrawImageElement[]
+    const selectedImages = selectedIdList
+      .map((id) =>
+        elements.find((element) => element.id === id && element.type === 'image')
+      )
+      .filter((element): element is ExcalidrawImageElement => !!element)
 
-    // 判断是否显示添加到对话按钮：选中图片元素
     const hasSelectedImages = selectedImages.length > 0
     setShowAddToChat(hasSelectedImages)
 
-    // 判断是否显示魔法生成按钮：选中2个以上元素（包含所有类型）
-    const selectedCount = Object.keys(selectedIds).length
+    const selectedCount = selectedIdList.length
     setShowMagicGenerate(selectedCount >= 2)
 
-    // 如果既没有选中图片，也没有满足魔法生成条件，隐藏弹窗
     if (!hasSelectedImages && selectedCount < 2) {
       setPos(null)
       return
     }
 
-    // 处理选中的图片数据
-    selectedImagesRef.current = selectedImages
-      .filter((image) => image.fileId)
-      .map((image) => {
-        const file = files[image.fileId!]
-        const isBase64 = file.dataURL.startsWith('data:')
-        const id = isBase64 ? file.id : file.dataURL.split('/').at(-1)!
-        return {
-          fileId: id,
-          base64: isBase64 ? file.dataURL : undefined,
-          width: image.width,
-          height: image.height,
-        }
-      })
+    // 按选中顺序编号（Object.keys 保留 Excalidraw 选中顺序）
+    selectedImagesRef.current = collectSelectedImagesInOrder(
+      elements.filter((el) => el.type === 'image') as ExcalidrawImageElement[],
+      files,
+      selectedIdList.filter((id) =>
+        elements.some((el) => el.id === id && el.type === 'image')
+      )
+    )
 
-    // 处理选中的元素数据
-    selectedElementsRef.current = elements.filter(
-      (element) => selectedIds[element.id] && element.index !== null
-    ) as OrderedExcalidrawElement[]
+    selectedElementsRef.current = selectedIdList
+      .map((id) => elements.find((element) => element.id === id))
+      .filter(
+        (element): element is OrderedExcalidrawElement =>
+          !!element && element.index !== null
+      )
 
-    // 计算位置：如果有图片，基于图片；否则基于所有选中的元素
     let centerX: number
     let bottomY: number
 
     if (hasSelectedImages) {
-      // 基于选中的图片计算位置
       centerX =
         selectedImages.reduce((acc, image) => acc + image.x + image.width / 2, 0) /
         selectedImages.length
@@ -80,8 +76,7 @@ const CanvasPopbarWrapper = () => {
         Number.NEGATIVE_INFINITY
       )
     } else {
-      // 基于所有选中的元素计算位置
-      const selectedElements = elements.filter((element) => selectedIds[element.id])
+      const selectedElements = selectedElementsRef.current
 
       centerX =
         selectedElements.reduce(
@@ -101,7 +96,6 @@ const CanvasPopbarWrapper = () => {
     const offsetX = (scrollX + centerX) * zoom
     const offsetY = (scrollY + bottomY) * zoom
     setPos({ x: offsetX, y: offsetY })
-    // console.log(offsetX, offsetY)
   })
 
   return (

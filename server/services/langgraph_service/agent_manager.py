@@ -37,7 +37,7 @@ class AgentManager:
         print(f"📸 图像工具: {image_tools}")
         print(f"🎬 视频工具: {video_tools}")
 
-        planner_config = PlannerAgentConfig()
+        planner_config = PlannerAgentConfig(tool_list)
         planner_agent = AgentManager._create_langgraph_agent(
             model, planner_config)
 

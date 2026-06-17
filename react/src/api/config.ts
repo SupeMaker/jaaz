@@ -23,6 +23,20 @@ export async function updateConfig(config: {
   return await response.json()
 }
 
+export async function testProvider(
+  provider: string,
+  config: LLMConfig
+): Promise<{ status: string; message: string }> {
+  const response = await fetch('/api/test_provider', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ provider, config }),
+  })
+  return await response.json()
+}
+
 // Update jaaz provider api_key after login
 export async function updateJaazApiKey(token: string): Promise<void> {
   try {

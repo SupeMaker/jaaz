@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { LOGO_URL } from '@/constants'
-import { LLMConfig } from '@/types/types'
+import { LLMConfig, ModelType } from '@/types/types'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useConfigs } from '@/contexts/configs'
@@ -43,8 +43,10 @@ export default function JaazSetting({
     }
 
     // Filter out any models that don't exist in availableModels
-    const validModels: Record<string, { type?: 'text' | 'image' | 'video' }> =
-      {}
+    const validModels: Record<
+      string,
+      { type?: ModelType | ModelType[]; is_custom?: boolean; is_disabled?: boolean }
+    > = {}
     Object.keys(updatedModels).forEach((key) => {
       if (availableModels[key]) {
         validModels[key] = updatedModels[key]

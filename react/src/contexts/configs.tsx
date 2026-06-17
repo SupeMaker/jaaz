@@ -48,16 +48,18 @@ export const ConfigsProvider = ({
         ? model.type.includes(type)
         : model.type === type
 
-    const textModel = localStorage.getItem('text_model')
-    if (
-      textModel &&
-      llmModels.find((m) => m.provider + ':' + m.model === textModel)
-    ) {
-      setTextModel(
-        llmModels.find((m) => m.provider + ':' + m.model === textModel)
-      )
+    const savedTextModelKey = localStorage.getItem('text_model')
+    const savedTextModel = savedTextModelKey
+      ? llmModels.find((m) => m.provider + ':' + m.model === savedTextModelKey)
+      : undefined
+    if (savedTextModel) {
+      setTextModel(savedTextModel)
     } else {
-      setTextModel(llmModels.find((m) => hasType(m, 'text')))
+      // 默认优先选择非 Ollama 的文本模型，避免 Ollama 未运行时无法使用
+      const textModelsList = llmModels.filter((m) => hasType(m, 'text'))
+      setTextModel(
+        textModelsList.find((m) => m.provider !== 'ollama') ?? textModelsList[0]
+      )
     }
 
     // 设置选中的工具模型

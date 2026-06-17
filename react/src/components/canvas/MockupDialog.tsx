@@ -10,10 +10,13 @@ import {
   Sun,
   Square,
   CloudFog,
+  Wand2,
+  Upload,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
-import { mockup } from '@/api/directEdit'
+import { mockup, composeImages } from '@/api/directEdit'
+import { uploadImage } from '@/api/upload'
 import { eventBus, TCanvasImageAddedEvent } from '@/lib/event'
 import { useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
@@ -34,6 +37,7 @@ interface CanvasImageOption {
   url: string
   width: number
   height: number
+  label: string
 }
 
 const DEFAULTS = {
@@ -44,12 +48,23 @@ const DEFAULTS = {
   opacity: 1,
   shadow: true,
   cornerRadius: 0,
+  blendMode: 'auto',
 }
+
+const BLEND_MODES = [
+  'auto',
+  'overlay',
+  'multiply',
+  'screen',
+  'soft_light',
+  'hard_light',
+  'normal',
+] as const
 
 /**
  * Mockup / 贴纸粘贴对话框（Lovart Mockup 风格）。
  *
- * 用户选择一张设计图，在目标图上实时预览位置、缩放、旋转、透明度、投影和圆角，
+ * 用户选择或上传设计图，在目标图上拖拽定位并实时预览，
  * 然后调用后端 /api/mockup 合成并保存到画布。
  */
 const MockupDialog: React.FC<MockupDialogProps> = ({
@@ -72,46 +87,74 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
   const [opacity, setOpacity] = useState(DEFAULTS.opacity)
   const [shadow, setShadow] = useState(DEFAULTS.shadow)
   const [cornerRadius, setCornerRadius] = useState(DEFAULTS.cornerRadius)
+  const [blendMode, setBlendMode] = useState(DEFAULTS.blendMode)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [dragMode, setDragMode] = useState<'none' | 'move' | 'scale'>('none')
+  const [dragStart, setDragStart] = useState({
+    clientX: 0,
+    clientY: 0,
+    x: 0,
+    y: 0,
+    scale: 0,
+  })
 
   const targetRef = useRef<HTMLImageElement>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [targetSize, setTargetSize] = useState({ width: 0, height: 0 })
+
+  const collectDesignOptions = useCallback(() => {
+    const options: CanvasImageOption[] = []
+    if (!excalidrawAPI) return options
+
+    const elements = excalidrawAPI.getSceneElements()
+    const files = excalidrawAPI.getFiles()
+    elements.forEach((el) => {
+      if (el.type !== 'image' || !el.fileId) return
+
+      const file = files[el.fileId]
+      if (!file) return
+
+      const isBase64 = file.dataURL.startsWith('data:')
+      const resolvedId = isBase64
+        ? file.id
+        : file.dataURL.split('/').pop() || el.fileId
+
+      if (resolvedId === targetFileId || el.fileId === targetFileId) return
+
+      options.push({
+        fileId: resolvedId,
+        url: isBase64 ? file.dataURL : file.dataURL,
+        width: el.width,
+        height: el.height,
+        label: resolvedId,
+      })
+    })
+
+    return options
+  }, [excalidrawAPI, targetFileId])
 
   // 重置状态
   useEffect(() => {
-    if (open) {
-      setX(DEFAULTS.x)
-      setY(DEFAULTS.y)
-      setScale(DEFAULTS.scale)
-      setRotate(DEFAULTS.rotate)
-      setOpacity(DEFAULTS.opacity)
-      setShadow(DEFAULTS.shadow)
-      setCornerRadius(DEFAULTS.cornerRadius)
-      setIsProcessing(false)
+    if (!open) return
 
-      // 从画布中提取所有可作为 design 的图像
-      const options: CanvasImageOption[] = []
-      if (excalidrawAPI) {
-        const elements = excalidrawAPI.getSceneElements()
-        const files = excalidrawAPI.getFiles()
-        elements.forEach((el) => {
-          if (el.type === 'image' && el.fileId && el.fileId !== targetFileId) {
-            const file = files[el.fileId]
-            if (file && !file.dataURL.startsWith('data:')) {
-              options.push({
-                fileId: file.dataURL.split('/').pop() || el.fileId,
-                url: file.dataURL,
-                width: el.width,
-                height: el.height,
-              })
-            }
-          }
-        })
-      }
-      setDesignOptions(options)
-      setDesignFileId(options[0]?.fileId || '')
-    }
-  }, [open, excalidrawAPI, targetFileId])
+    setX(DEFAULTS.x)
+    setY(DEFAULTS.y)
+    setScale(DEFAULTS.scale)
+    setRotate(DEFAULTS.rotate)
+    setOpacity(DEFAULTS.opacity)
+    setShadow(DEFAULTS.shadow)
+    setCornerRadius(DEFAULTS.cornerRadius)
+    setBlendMode(DEFAULTS.blendMode)
+    setIsProcessing(false)
+    setIsUploading(false)
+    setDragMode('none')
+
+    const options = collectDesignOptions()
+    setDesignOptions(options)
+    setDesignFileId(options[0]?.fileId || '')
+  }, [open, collectDesignOptions])
 
   const selectedDesign = useMemo(
     () => designOptions.find((d) => d.fileId === designFileId),
@@ -125,7 +168,11 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
     }
   }, [])
 
-  // 计算设计图在预览中的像素尺寸（保持宽高比）
+  useEffect(() => {
+    if (!open) return
+    handleTargetLoad()
+  }, [open, handleTargetLoad, targetImageUrl])
+
   const previewDesignSize = useMemo(() => {
     if (!selectedDesign || targetSize.width === 0) return null
     const minTarget = Math.min(targetSize.width, targetSize.height)
@@ -136,6 +183,97 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
       height: selectedDesign.height * ratio,
     }
   }, [selectedDesign, targetSize, scale])
+
+  const handleDesignMouseDown = useCallback(
+    (e: React.MouseEvent, mode: 'move' | 'scale') => {
+      if (isProcessing || !selectedDesign) return
+      e.preventDefault()
+      e.stopPropagation()
+      setDragMode(mode)
+      setDragStart({
+        clientX: e.clientX,
+        clientY: e.clientY,
+        x,
+        y,
+        scale,
+      })
+    },
+    [isProcessing, selectedDesign, x, y, scale]
+  )
+
+  const handlePreviewMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (dragMode === 'none' || !previewRef.current || targetSize.width === 0) return
+
+      const rect = previewRef.current.getBoundingClientRect()
+      const dx = (e.clientX - dragStart.clientX) / rect.width
+      const dy = (e.clientY - dragStart.clientY) / rect.height
+
+      if (dragMode === 'move') {
+        setX(Math.max(0, Math.min(1, dragStart.x + dx)))
+        setY(Math.max(0, Math.min(1, dragStart.y + dy)))
+      } else if (dragMode === 'scale') {
+        const delta = (e.clientX - dragStart.clientX + e.clientY - dragStart.clientY) / 400
+        setScale(Math.max(0.02, Math.min(1, dragStart.scale + delta)))
+      }
+    },
+    [dragMode, dragStart, targetSize.width]
+  )
+
+  const handlePreviewMouseUp = useCallback(() => {
+    setDragMode('none')
+  }, [])
+
+  useEffect(() => {
+    if (dragMode === 'none') return
+    window.addEventListener('mousemove', handlePreviewMouseMove)
+    window.addEventListener('mouseup', handlePreviewMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handlePreviewMouseMove)
+      window.removeEventListener('mouseup', handlePreviewMouseUp)
+    }
+  }, [dragMode, handlePreviewMouseMove, handlePreviewMouseUp])
+
+  const handlePreviewWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (!selectedDesign || isProcessing) return
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? -0.02 : 0.02
+      setScale((prev) => Math.max(0.02, Math.min(1, prev + delta)))
+    },
+    [selectedDesign, isProcessing]
+  )
+
+  const handleUploadDesign = useCallback(
+    async (file: File) => {
+      setIsUploading(true)
+      try {
+        const result = await uploadImage(file)
+        const newOption: CanvasImageOption = {
+          fileId: result.file_id,
+          url: result.url || `/api/file/${result.file_id}`,
+          width: result.width,
+          height: result.height,
+          label: file.name,
+        }
+        setDesignOptions((prev) => {
+          const filtered = prev.filter((opt) => opt.fileId !== newOption.fileId)
+          return [newOption, ...filtered]
+        })
+        setDesignFileId(newOption.fileId)
+      } catch (e) {
+        eventBus.emit('Canvas::TaskDone', {
+          id: nanoid(),
+          type: 'mockup',
+          status: 'error',
+          message: t('canvas:mockup.uploadFailed', { error: String(e) }),
+        })
+      } finally {
+        setIsUploading(false)
+      }
+    },
+    [t]
+  )
 
   const handleSubmit = useCallback(async () => {
     if (!designFileId) {
@@ -170,6 +308,7 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
         opacity,
         shadow,
         cornerRadius,
+        blendMode,
       })
 
       if (result.status === 'success') {
@@ -218,9 +357,81 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
     opacity,
     shadow,
     cornerRadius,
+    blendMode,
     onClose,
     t,
   ])
+
+  const handleAutoFit = useCallback(async () => {
+    if (!designFileId) {
+      eventBus.emit('Canvas::TaskDone', {
+        id: nanoid(),
+        type: 'mockup',
+        status: 'error',
+        message: t('canvas:mockup.noDesign', 'Please select a design image'),
+      })
+      return
+    }
+
+    const taskId = nanoid()
+    setIsProcessing(true)
+    eventBus.emit('Canvas::TaskStarted', {
+      id: taskId,
+      type: 'mockup',
+      status: 'running',
+      message: t('canvas:mockup.autoFitting', 'AI auto-fitting...'),
+    })
+
+    try {
+      const autoFitPrompt = t(
+        'canvas:mockup.autoFitPrompt',
+        'Place image 2 (the design/logo) onto the main object in image 1 (the mockup). Automatically determine the best position, scale, rotation, and perspective to naturally fit the object\'s surface. Match the lighting, shadows, and texture of the mockup. The result should look like the design was naturally printed or placed on the object.'
+      )
+
+      const result = await composeImages({
+        sessionId,
+        canvasId,
+        prompt: autoFitPrompt,
+        inputImages: [targetFileId, designFileId],
+      })
+
+      if (result.status === 'success') {
+        eventBus.emit('Canvas::TaskDone', {
+          id: taskId,
+          type: 'mockup',
+          status: 'success',
+          message: t('canvas:mockup.autoFitCompleted', 'Auto-fit completed'),
+        })
+        const addEvent: TCanvasImageAddedEvent = {
+          canvas_id: canvasId,
+          session_id: sessionId,
+          element: result.result.element,
+          file: result.result.file,
+          image_url: result.result.image_url,
+        }
+        eventBus.emit('Canvas::ImageAdded', addEvent)
+        onClose()
+      } else {
+        eventBus.emit('Canvas::TaskDone', {
+          id: taskId,
+          type: 'mockup',
+          status: 'error',
+          message: t('canvas:mockup.failed', 'Auto-fit failed'),
+        })
+      }
+    } catch (e) {
+      eventBus.emit('Canvas::TaskDone', {
+        id: taskId,
+        type: 'mockup',
+        status: 'error',
+        message: t('canvas:mockup.failedWithError', { error: String(e) }),
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }, [designFileId, sessionId, canvasId, targetFileId, onClose, t])
+
+  const isBusy = isProcessing || isUploading
 
   return (
     <AnimatePresence>
@@ -258,8 +469,18 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
             {/* Body */}
             <div className='flex-1 overflow-hidden flex flex-col md:flex-row'>
               {/* Preview */}
-              <div className='flex-1 bg-muted/30 p-4 flex items-center justify-center overflow-auto'>
-                <div className='relative inline-block select-none'>
+              <div className='flex-1 bg-muted/30 p-4 flex flex-col items-center justify-center overflow-auto'>
+                <p className='text-[11px] text-muted-foreground mb-2 self-start'>
+                  {t(
+                    'canvas:mockup.dragHint',
+                    'Drag the design to position it. Scroll to resize. Drag the corner handle to scale.'
+                  )}
+                </p>
+                <div
+                  ref={previewRef}
+                  className='relative inline-block select-none'
+                  onWheel={handlePreviewWheel}
+                >
                   <img
                     ref={targetRef}
                     src={targetImageUrl}
@@ -270,7 +491,10 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                   />
                   {selectedDesign && previewDesignSize && targetSize.width > 0 && (
                     <div
-                      className='absolute pointer-events-none'
+                      className={cn(
+                        'absolute cursor-move border-2 border-primary/70',
+                        dragMode === 'move' && 'border-primary shadow-lg'
+                      )}
                       style={{
                         left: x * targetSize.width,
                         top: y * targetSize.height,
@@ -285,15 +509,19 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                           : 'none',
                         overflow: 'hidden',
                       }}
+                      onMouseDown={(e) => handleDesignMouseDown(e, 'move')}
                     >
                       <img
                         src={selectedDesign.url}
                         alt='design preview'
-                        className='w-full h-full object-contain'
+                        className='w-full h-full object-contain pointer-events-none'
                         draggable={false}
-                        style={{
-                          borderRadius: 'inherit',
-                        }}
+                        style={{ borderRadius: 'inherit' }}
+                      />
+                      <div
+                        className='absolute -bottom-1 -right-1 size-3.5 rounded-full bg-primary border-2 border-background cursor-nwse-resize'
+                        onMouseDown={(e) => handleDesignMouseDown(e, 'scale')}
+                        title={t('canvas:mockup.resizeHandle', 'Drag to resize')}
                       />
                     </div>
                   )}
@@ -308,26 +536,52 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                     <Sticker className='size-3' />
                     {t('canvas:mockup.designImage', 'Design Image')}
                   </label>
-                  <select
-                    value={designFileId}
-                    onChange={(e) => setDesignFileId(e.target.value)}
-                    className='w-full h-9 px-2 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-1 focus:ring-primary/30'
-                    disabled={isProcessing}
-                  >
-                    <option value=''>
-                      {t('canvas:mockup.selectDesign', 'Select a design image')}
-                    </option>
-                    {designOptions.map((opt) => (
-                      <option key={opt.fileId} value={opt.fileId}>
-                        {opt.fileId}
+                  <div className='flex gap-2'>
+                    <select
+                      value={designFileId}
+                      onChange={(e) => setDesignFileId(e.target.value)}
+                      className='flex-1 h-9 px-2 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-1 focus:ring-primary/30'
+                      disabled={isBusy}
+                    >
+                      <option value=''>
+                        {t('canvas:mockup.selectDesign', 'Select a design image')}
                       </option>
-                    ))}
-                  </select>
+                      {designOptions.map((opt) => (
+                        <option key={opt.fileId} value={opt.fileId}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='h-9 px-2.5 shrink-0'
+                      disabled={isBusy}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {isUploading ? (
+                        <Loader2 className='size-3.5 animate-spin' />
+                      ) : (
+                        <Upload className='size-3.5' />
+                      )}
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type='file'
+                      accept='image/*'
+                      className='hidden'
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) void handleUploadDesign(file)
+                        e.target.value = ''
+                      }}
+                    />
+                  </div>
                   {designOptions.length === 0 && (
                     <p className='text-xs text-muted-foreground'>
                       {t(
                         'canvas:mockup.noDesignImages',
-                        'No other images on the canvas. Add a logo or sticker first.'
+                        'No other images on the canvas. Upload a logo or sticker.'
                       )}
                     </p>
                   )}
@@ -341,7 +595,7 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                   max={1}
                   step={0.01}
                   onChange={setX}
-                  disabled={isProcessing}
+                  disabled={isBusy}
                   format={(v) => `${Math.round(v * 100)}%`}
                 />
                 <ControlRow
@@ -352,7 +606,7 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                   max={1}
                   step={0.01}
                   onChange={setY}
-                  disabled={isProcessing}
+                  disabled={isBusy}
                   format={(v) => `${Math.round(v * 100)}%`}
                 />
                 <ControlRow
@@ -363,7 +617,7 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                   max={1.0}
                   step={0.01}
                   onChange={setScale}
-                  disabled={isProcessing}
+                  disabled={isBusy}
                   format={(v) => `${Math.round(v * 100)}%`}
                 />
                 <ControlRow
@@ -374,7 +628,7 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                   max={180}
                   step={1}
                   onChange={setRotate}
-                  disabled={isProcessing}
+                  disabled={isBusy}
                   format={(v) => `${Math.round(v)}°`}
                 />
                 <ControlRow
@@ -385,7 +639,7 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                   max={1}
                   step={0.01}
                   onChange={setOpacity}
-                  disabled={isProcessing}
+                  disabled={isBusy}
                   format={(v) => `${Math.round(v * 100)}%`}
                 />
                 <ControlRow
@@ -396,9 +650,27 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                   max={0.5}
                   step={0.01}
                   onChange={setCornerRadius}
-                  disabled={isProcessing}
+                  disabled={isBusy}
                   format={(v) => `${Math.round(v * 100)}%`}
                 />
+
+                <div className='space-y-1.5'>
+                  <label className='text-xs font-medium text-muted-foreground'>
+                    {t('canvas:mockup.blendMode', 'Blend Mode')}
+                  </label>
+                  <select
+                    value={blendMode}
+                    onChange={(e) => setBlendMode(e.target.value)}
+                    className='w-full h-9 px-2 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-1 focus:ring-primary/30'
+                    disabled={isBusy}
+                  >
+                    {BLEND_MODES.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode.replace('_', ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 {/* Shadow toggle */}
                 <div className='flex items-center justify-between'>
@@ -412,7 +684,7 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                       'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
                       shadow ? 'bg-primary' : 'bg-muted'
                     )}
-                    disabled={isProcessing}
+                    disabled={isBusy}
                   >
                     <span
                       className={cn(
@@ -435,14 +707,28 @@ const MockupDialog: React.FC<MockupDialogProps> = ({
                   variant='outline'
                   size='sm'
                   onClick={onClose}
-                  disabled={isProcessing}
+                  disabled={isBusy}
                 >
                   {t('common:cancel', 'Cancel')}
                 </Button>
                 <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleAutoFit}
+                  disabled={isBusy || !designFileId}
+                  className='border-primary/30 text-primary hover:bg-primary/10'
+                >
+                  {isProcessing ? (
+                    <Loader2 className='size-3.5 animate-spin mr-1' />
+                  ) : (
+                    <Wand2 className='size-3.5 mr-1' />
+                  )}
+                  {t('canvas:mockup.autoFit', 'AI Auto-fit')}
+                </Button>
+                <Button
                   size='sm'
                   onClick={handleSubmit}
-                  disabled={isProcessing || !designFileId}
+                  disabled={isBusy || !designFileId}
                 >
                   {isProcessing ? (
                     <>

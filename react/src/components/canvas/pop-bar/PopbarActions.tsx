@@ -13,16 +13,19 @@ import {
   Paintbrush,
   Download,
   Sticker,
+  Layers,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import CanvasInpaintEditor from '../CanvasInpaintEditor'
-import MockupDialog from '../MockupDialog'
+import CanvasComposeDialog from '../CanvasComposeDialog'
+import CanvasMockupEditor from '../CanvasMockupEditor'
 
 type PopbarActionsProps = {
   selectedImages: TCanvasAddImagesToChatEvent
+  popbarPos?: { x: number; y: number }
 }
 
-const PopbarActions = ({ selectedImages }: PopbarActionsProps) => {
+const PopbarActions = ({ selectedImages, popbarPos }: PopbarActionsProps) => {
   const { t } = useTranslation()
   const { canvasId } = useCanvas()
   const hasImages = selectedImages.length > 0
@@ -33,8 +36,11 @@ const PopbarActions = ({ selectedImages }: PopbarActionsProps) => {
     'editElement'
   )
 
-  // MockupDialog state
+  // Mockup editor state
   const [mockupOpen, setMockupOpen] = useState(false)
+
+  // Compose dialog state
+  const [composeOpen, setComposeOpen] = useState(false)
 
   // 从 URL search params 获取 sessionId
   const sessionId = useMemo(() => {
@@ -46,7 +52,7 @@ const PopbarActions = ({ selectedImages }: PopbarActionsProps) => {
   // 获取选中图像的信息（取第一张）
   const selectedImage = selectedImages[0]
   const imageUrl = selectedImage
-    ? `/api/file/${selectedImage.fileId}`
+    ? selectedImage.base64 || `/api/file/${selectedImage.fileId}`
     : ''
   const imageFileId = selectedImage?.fileId || ''
 
@@ -109,6 +115,14 @@ const PopbarActions = ({ selectedImages }: PopbarActionsProps) => {
     setMockupOpen(true)
   }
 
+  const handleCompose = () => {
+    if (selectedImages.length < 2) {
+      toast.error(t('canvas:compose.needTwoImages', 'Please select at least 2 images'))
+      return
+    }
+    setComposeOpen(true)
+  }
+
   const actions = [
     { icon: Maximize2, label: 'upscale', onClick: handleUpscale, needsImage: true },
     { icon: Eraser, label: 'removeBg', onClick: handleRemoveBg, needsImage: true },
@@ -116,6 +130,7 @@ const PopbarActions = ({ selectedImages }: PopbarActionsProps) => {
     { icon: Type, label: 'editText', onClick: handleEditText, needsImage: false },
     { icon: Expand, label: 'expand', onClick: handleExpand, needsImage: true },
     { icon: Paintbrush, label: 'redraw', onClick: handleRedraw, needsImage: false },
+    { icon: Layers, label: 'compose', onClick: handleCompose, needsImage: false, minImages: 2 },
     { icon: Sticker, label: 'mockup', onClick: handleMockup, needsImage: false },
     { icon: Download, label: 'download', onClick: handleDownload, needsImage: true },
   ]
@@ -125,6 +140,7 @@ const PopbarActions = ({ selectedImages }: PopbarActionsProps) => {
       <div className="w-px h-5 bg-border mx-0.5" />
       {actions.map((action) => {
         if (action.needsImage && !hasImages) return null
+        if ('minImages' in action && action.minImages && selectedImages.length < action.minImages) return null
         return (
           <Button
             key={action.label}
@@ -144,9 +160,11 @@ const PopbarActions = ({ selectedImages }: PopbarActionsProps) => {
         open={inpaintOpen}
         onClose={() => setInpaintOpen(false)}
         imageFileId={imageFileId}
+        imageUrl={imageUrl}
         sessionId={sessionId}
         canvasId={canvasId}
         defaultMode={inpaintMode}
+        popbarPos={popbarPos}
         title={
           inpaintMode === 'editElement'
             ? t('canvas:popbar.editElement')
@@ -165,14 +183,24 @@ const PopbarActions = ({ selectedImages }: PopbarActionsProps) => {
         }
       />
 
-      {/* Mockup / 贴纸粘贴对话框 */}
-      <MockupDialog
+      {/* 图像合成对话框 */}
+      <CanvasComposeDialog
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        selectedImages={selectedImages}
+        sessionId={sessionId}
+        canvasId={canvasId}
+        popbarPos={popbarPos}
+      />
+
+      {/* Mockup 画布内编辑器：选中样机 → 拖拽贴图 → AI 自动贴合 */}
+      <CanvasMockupEditor
         open={mockupOpen}
         onClose={() => setMockupOpen(false)}
         targetFileId={imageFileId}
-        targetImageUrl={imageUrl}
         sessionId={sessionId}
         canvasId={canvasId}
+        popbarPos={popbarPos}
       />
     </>
   )

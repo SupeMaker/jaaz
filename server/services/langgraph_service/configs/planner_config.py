@@ -1,4 +1,5 @@
 from typing import List
+from models.tool_model import ToolInfoJson
 from .base_config import BaseAgentConfig, HandoffConfig
 
 
@@ -6,7 +7,7 @@ class PlannerAgentConfig(BaseAgentConfig):
     """规划智能体 - 负责制定执行计划
     """
 
-    def __init__(self) -> None:
+    def __init__(self, tool_list: List[ToolInfoJson] = None) -> None:
         system_prompt = """
             You are a design planning writing agent. Answer and write plan in the SAME LANGUAGE as the user's prompt. You should do:
             - Step 1. If it is a complex task requiring multiple steps, write a execution plan for the user's request using the SAME LANGUAGE AS THE USER'S PROMPT. You should breakdown the task into high level steps for the other agents to execute.
@@ -47,9 +48,15 @@ class PlannerAgentConfig(BaseAgentConfig):
             }
         ]
 
+        # Planner gets write_plan + all image/video tools so it can directly
+        # generate images without needing a handoff (more reliable for simple tasks)
+        tools = [{'id': 'write_plan', 'provider': 'system'}]
+        if tool_list:
+            tools.extend(tool_list)
+
         super().__init__(
             name='planner',
-            tools=[{'id': 'write_plan', 'provider': 'system'}],
+            tools=tools,
             system_prompt=system_prompt,
             handoffs=handoffs
         )
