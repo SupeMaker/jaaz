@@ -13,6 +13,7 @@ from tools.utils.image_canvas_utils import save_image_to_canvas
 from tools.utils.image_utils import generate_image_id
 from services.config_service import FILES_DIR
 from services.db_service import db_service
+from utils.image_warp import apply_cylindrical_warp
 from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
 import os
@@ -26,7 +27,7 @@ router = APIRouter(prefix="/api")
 class DirectEditRequest(BaseModel):
     session_id: str
     canvas_id: str
-    action: str  # upscale | remove_bg | edit_element | edit_text | expand | redraw
+    action: str  # upscale | remove_bg | edit_element | edit_text | expand | redraw | compose
     prompt: str = ""
     input_images: List[str] = []
     aspect_ratio: str = "1:1"
@@ -64,7 +65,24 @@ class MockupRequest(BaseModel):
     shadow: bool = True  # 是否添加投影
     corner_radius: float = 0.0  # 圆角半径相对设计图短边的比例 0-1
     blend_mode: str = "auto"  # auto | overlay | multiply | screen | soft_light | hard_light | color_burn | color_dodge | normal
+    curvature: float = 0.0  # 柱面弯曲 -1~1，贴图随曲面弧度变形
     prompt: str = ""  # 可选 AI 增强提示词（保留扩展）
+
+
+class IcMockupRequest(BaseModel):
+    """In-Context LoRA 风格 Mockup 请求（Visual Identity Design 范式）"""
+    session_id: str
+    canvas_id: str
+    target_file_id: str
+    design_file_id: str
+    x: float = 0.5
+    y: float = 0.5
+    scale: float = 0.25
+    curvature: float = 0.0
+    provider: str = "agnes"
+    model: str = "agnes-image-2.0-flash"
+    aspect_ratio: str = "16:9"  # IC-LoRA 双 panel 宽屏布局
+    fallback_pil: bool = True  # AI 失败时回退 PIL 合成
 
 
 # Action -> default prompt mapping
@@ -75,6 +93,7 @@ ACTION_DEFAULT_PROMPTS = {
     "redraw": "Redraw this image with enhanced quality, better composition, and refined details while keeping the same subject and overall concept.",
     "edit_element": "Edit this image according to the user's instructions.",
     "edit_text": "Edit the text in this image according to the user's instructions.",
+    "compose": "Compose and merge the provided images into a single cohesive image according to the user's instructions.",
 }
 
 
@@ -96,6 +115,20 @@ async def direct_edit(request: DirectEditRequest):
 
         # Use provided prompt or default for the action
         prompt = request.prompt.strip() or ACTION_DEFAULT_PROMPTS[action]
+
+        if action == "compose" and request.input_images:
+            image_list = "\n".join(
+                f"- Image {index + 1}: input reference #{index + 1}"
+                for index in range(len(request.input_images))
+            )
+            prompt = (
+                f"You are composing {len(request.input_images)} images into one cohesive result.\n"
+                f"Images are numbered by the user's selection order:\n"
+                f"{image_list}\n\n"
+                f"User instruction: {prompt}\n\n"
+                "When the user refers to image numbers (e.g. image 2, the second image), "
+                "follow the numbered list above."
+            )
 
         if not request.input_images:
             raise HTTPException(
@@ -447,6 +480,10 @@ async def _composite_mockup(request: MockupRequest) -> str:
     new_h = max(1, int(design_h * ratio))
     design = design.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
+    # 柱面弯曲（贴合圆杯/曲面产品）
+    if abs(request.curvature) > 0.06:
+        design = apply_cylindrical_warp(design, request.curvature)
+
     # 应用圆角
     if request.corner_radius > 0:
         radius = int(min(new_w, new_h) * min(1.0, request.corner_radius))
@@ -549,6 +586,142 @@ async def mockup(request: MockupRequest):
                 'type': 'error',
                 'error': f"Mockup failed: {str(e)}",
                 'action': 'mockup',
+            })
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ic_mockup")
+async def ic_mockup(request: IcMockupRequest):
+    """
+    In-Context LoRA 风格 Mockup（Visual Identity Design 范式）。
+
+    1. 拼接 [LEFT] 设计稿 + [RIGHT] 样机图为 in-context 条件
+    2. 生成 placement hint 图作为附加条件
+    3. 使用 IC-LoRA 结构化 prompt 调用图像模型
+    4. 提取右侧 mockup 面板作为结果
+
+    参考: https://github.com/ali-vilab/In-Context-LoRA
+    """
+    from services.ic_lora_mockup_service import (
+        prepare_ic_lora_mockup_inputs,
+        load_rgba,
+        extract_mockup_panel,
+        save_temp_image,
+    )
+
+    try:
+        await send_to_websocket(request.session_id, {
+            'type': 'image_generation_start',
+            'message': 'Processing IC-LoRA mockup...',
+            'action': 'ic_mockup',
+        })
+
+        target_path = await _resolve_file_id_to_path(request.canvas_id, request.target_file_id)
+        design_path = await _resolve_file_id_to_path(request.canvas_id, request.design_file_id)
+        if not target_path or not os.path.exists(target_path):
+            raise HTTPException(status_code=400, detail=f"Target image not found: {request.target_file_id}")
+        if not design_path or not os.path.exists(design_path):
+            raise HTTPException(status_code=400, detail=f"Design image not found: {request.design_file_id}")
+
+        target = load_rgba(target_path)
+        design = load_rgba(design_path)
+
+        composite_filename, hint_filename, prompt = prepare_ic_lora_mockup_inputs(
+            target, design, request.x, request.y, request.scale, request.curvature
+        )
+
+        output_filename: Optional[str] = None
+        method = "pil_fallback"
+
+        try:
+            from tools.utils.image_generation_core import IMAGE_PROVIDERS
+            from tools.utils.image_utils import process_input_image
+
+            provider_instance = IMAGE_PROVIDERS.get(request.provider)
+            if not provider_instance:
+                raise ValueError(f"Unknown provider: {request.provider}")
+
+            input_paths = [composite_filename, hint_filename, request.target_file_id]
+            processed_inputs: list[str] = []
+            for image_path in input_paths:
+                processed = await process_input_image(image_path)
+                if processed:
+                    processed_inputs.append(processed)
+
+            mime_type, _w, _h, generated_name = await provider_instance.generate(
+                prompt=prompt,
+                model=request.model,
+                aspect_ratio=request.aspect_ratio,
+                input_images=processed_inputs or None,
+            )
+
+            gen_path = os.path.join(FILES_DIR, generated_name)
+            if os.path.exists(gen_path):
+                with Image.open(gen_path) as gen_img:
+                    extracted = extract_mockup_panel(gen_img.convert("RGBA"))
+                    output_filename = save_temp_image(extracted, "ic_mockup_result")
+                    method = "ic_lora"
+                # 清理中间生成文件，避免污染画布文件目录
+                try:
+                    os.remove(gen_path)
+                except OSError:
+                    pass
+        except Exception as gen_err:
+            print(f"⚠️ IC-LoRA AI generation failed, will fallback: {gen_err}")
+            traceback.print_exc()
+
+        if not output_filename and request.fallback_pil:
+            pil_request = MockupRequest(
+                session_id=request.session_id,
+                canvas_id=request.canvas_id,
+                target_file_id=request.target_file_id,
+                design_file_id=request.design_file_id,
+                x=request.x,
+                y=request.y,
+                scale=request.scale,
+                curvature=request.curvature,
+                blend_mode="auto",
+            )
+            output_filename = await _composite_mockup(pil_request)
+            method = "pil_fallback"
+
+        if not output_filename:
+            raise HTTPException(status_code=500, detail="IC-LoRA mockup generation failed")
+
+        output_path = os.path.join(FILES_DIR, output_filename)
+        with Image.open(output_path) as img:
+            width, height = img.size
+            mime_type = 'image/png'
+
+        result = await save_image_to_canvas(
+            session_id=request.session_id,
+            canvas_id=request.canvas_id,
+            filename=output_filename,
+            mime_type=mime_type,
+            width=width,
+            height=height,
+            broadcast=False,
+        )
+
+        return {
+            "status": "success",
+            "result": result,
+            "action": "ic_mockup",
+            "method": method,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ IC-LoRA Mockup error: {e}")
+        traceback.print_exc()
+        try:
+            await send_to_websocket(request.session_id, {
+                'type': 'error',
+                'error': f"IC-LoRA mockup failed: {str(e)}",
+                'action': 'ic_mockup',
             })
         except Exception:
             pass

@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { LLMConfig } from '@/types/types'
+import { LLMConfig, ModelType } from '@/types/types'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AddModelsList from './AddModelsList'
@@ -131,6 +131,11 @@ const PROVIDER_OPTIONS = [
     label: '月之暗面 (Kimi)',
     data: { apiUrl: 'https://api.moonshot.cn/v1/' },
   },
+  {
+    value: 'custom',
+    label: 'Custom Provider',
+    data: { apiUrl: '', models: {} },
+  },
 ]
 
 export default function AddProviderDialog({
@@ -140,15 +145,17 @@ export default function AddProviderDialog({
 }: AddProviderDialogProps) {
   const { t } = useTranslation()
   const [providerName, setProviderName] = useState('')
+  const [customProviderName, setCustomProviderName] = useState('')
   const [apiUrl, setApiUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [models, setModels] = useState<
-    Record<string, { type?: 'text' | 'image' | 'video' }>
+    Record<string, { type?: ModelType | ModelType[] }>
   >({})
   const [searchQuery, setSearchQuery] = useState('')
 
   const selectedProvider = PROVIDER_OPTIONS.find((p) => p.value === providerName)
   const isMediaOnlyProvider = selectedProvider?.mediaOnly ?? false
+  const isCustom = providerName === 'custom'
 
   // Filter providers by search query
   const filteredProviders = useMemo(() => {
@@ -178,6 +185,10 @@ export default function AddProviderDialog({
     if (!providerName.trim() || !apiUrl.trim()) {
       return
     }
+    if (isCustom && !customProviderName.trim()) {
+      toast.error(t('settings:provider.providerNameRequired'))
+      return
+    }
     if (
       !PROVIDER_OPTIONS.find((p) => p.value === providerName)?.mediaOnly &&
       Object.keys(models).length === 0
@@ -195,12 +206,15 @@ export default function AddProviderDialog({
     }
 
     // Use provider name as key (convert to lowercase and replace spaces with underscores)
-    const providerKey = providerName.toLowerCase().replace(/\s+/g, '_')
+    const providerKey = isCustom
+      ? customProviderName.toLowerCase().replace(/\s+/g, '_')
+      : providerName.toLowerCase().replace(/\s+/g, '_')
 
     onSave(providerKey, config)
 
     // Reset form
     setProviderName('')
+    setCustomProviderName('')
     setApiUrl('')
     setApiKey('')
     setModels({})
@@ -211,6 +225,7 @@ export default function AddProviderDialog({
   const handleCancel = () => {
     // Reset form
     setProviderName('')
+    setCustomProviderName('')
     setApiUrl('')
     setApiKey('')
     setModels({})
@@ -291,6 +306,21 @@ export default function AddProviderDialog({
           {/* Show full configuration only after a provider is selected */}
           {providerName && (
             <div className="space-y-4 pt-2 border-t border-border/40">
+              {/* Custom Provider Name */}
+              {isCustom && (
+                <div className="space-y-2">
+                  <Label htmlFor="custom-provider-name">
+                    {t('settings:provider.providerName')}
+                  </Label>
+                  <Input
+                    id="custom-provider-name"
+                    placeholder={t('settings:provider.providerNamePlaceholder')}
+                    value={customProviderName}
+                    onChange={(e) => setCustomProviderName(e.target.value)}
+                  />
+                </div>
+              )}
+
               {/* API URL */}
               <div className="space-y-2">
                 <Label htmlFor="api-url">{t('settings:provider.apiUrl')}</Label>
@@ -332,7 +362,11 @@ export default function AddProviderDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!providerName.trim() || !apiUrl.trim()}
+            disabled={
+              !providerName.trim() ||
+              !apiUrl.trim() ||
+              (isCustom && !customProviderName.trim())
+            }
           >
             {t('settings:provider.save')}
           </Button>

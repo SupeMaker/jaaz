@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Trash2, FileText, ImageIcon, Video, Music, Check } from 'lucide-react'
+import { Plus, Trash2, FileText, ImageIcon, Video, Check } from 'lucide-react'
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog'
 import { cn } from '@/lib/utils'
+import { ModelType } from '@/types/types'
 
-export type ModelType = 'text' | 'image' | 'video' | 'audio'
 export type ModelItem = {
   name: string
   types: ModelType[]
@@ -16,14 +16,12 @@ const MODEL_TYPE_OPTIONS: { value: ModelType; label: string; icon: React.Element
   { value: 'text', label: 'Text', icon: FileText },
   { value: 'image', label: 'Image', icon: ImageIcon },
   { value: 'video', label: 'Video', icon: Video },
-  { value: 'audio', label: 'Audio', icon: Music },
 ]
 
 const typeColors: Record<ModelType, string> = {
   text: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   image: 'bg-violet-500/10 text-violet-500 border-violet-500/20',
   video: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-  audio: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
 }
 
 interface ModelsListProps {

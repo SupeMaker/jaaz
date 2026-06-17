@@ -42,7 +42,7 @@ const CanvasPopbarContainer = ({
                 {showMagicGenerate && (
                     <CanvasMagicGenerator selectedImages={selectedImages} selectedElements={selectedElements} />
                 )}
-                <PopbarActions selectedImages={selectedImages} />
+                <PopbarActions selectedImages={selectedImages} popbarPos={pos} />
             </div>
         </motion.div>
     )

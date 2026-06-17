@@ -250,6 +250,15 @@ async def langgraph_multi_agent(
         await processor.process_stream(swarm, fixed_messages, context)
 
     except Exception as e:
+        # If it's a configuration error (ValueError), report it directly
+        if isinstance(e, ValueError):
+            print(f"❌ Text model configuration error: {e}")
+            await send_to_websocket(session_id, cast(Dict[str, Any], {
+                'type': 'error',
+                'error': str(e)
+            }))
+            return
+
         # 检查是否是文本模型连接错误，如果是则尝试直接调用图像生成工具
         if _is_connection_error(e) and tool_list:
             print(f"⚠️ 文本模型连接失败，尝试直接调用图像生成工具: {e}")
@@ -360,8 +369,25 @@ def _create_text_model(text_model: ModelInfo) -> Any:
     model = text_model.get('model')
     provider = text_model.get('provider')
     url = text_model.get('url')
+
+    if not model or not provider or not url:
+        raise ValueError(
+            f"Text model configuration incomplete: "
+            f"provider={provider!r}, model={model!r}, url={url!r}. "
+            f"Please select a valid text model in the model selector."
+        )
+
     api_key = config_service.app_config.get(  # type: ignore
         provider, {}).get("api_key", "")
+
+    # Check if provider is disabled
+    is_disabled = config_service.app_config.get(  # type: ignore
+        provider, {}).get("is_disabled", False)
+    if is_disabled:
+        raise ValueError(
+            f"Provider '{provider}' is disabled. "
+            f"Please enable it in settings or select a different model."
+        )
 
     # TODO: Verify if max token is working
     # max_tokens = text_model.get('max_tokens', 8148)
@@ -380,6 +406,12 @@ def _create_text_model(text_model: ModelInfo) -> Any:
             base_url=url,
         )
     else:
+        if not api_key:
+            raise ValueError(
+                f"API key for provider '{provider}' is empty. "
+                f"Please configure the API key in Settings > Providers."
+            )
+
         # Create httpx client with SSL configuration for ChatOpenAI
         http_client = HttpClient.create_sync_client()
         http_async_client = HttpClient.create_async_client()

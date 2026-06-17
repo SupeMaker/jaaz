@@ -76,6 +76,7 @@ export type LLMConfig = {
   api_key: string
   max_tokens?: number
   is_custom?: boolean
+  is_disabled?: boolean
 }
 
 export interface AppStateWithVideos extends AppState {
@@ -96,8 +97,6 @@ export type Session = {
   title: string
   updated_at: string
 }
-
-export type ModelType = 'text' | 'image' | 'video'
 
 export type Model = {
   provider: string

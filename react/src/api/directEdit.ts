@@ -10,7 +10,7 @@ import { BinaryFileData } from '@excalidraw/excalidraw/types'
 export interface DirectEditRequest {
   sessionId: string
   canvasId: string
-  action: 'upscale' | 'remove_bg' | 'edit_element' | 'edit_text' | 'expand' | 'redraw'
+  action: 'upscale' | 'remove_bg' | 'edit_element' | 'edit_text' | 'expand' | 'redraw' | 'compose'
   prompt?: string
   inputImages: string[]
   aspectRatio?: string
@@ -119,6 +119,34 @@ export const inpaint = async (
 }
 
 // -------------------------------------------------------------------
+// Compose (图像合成)
+// -------------------------------------------------------------------
+export interface ComposeRequest {
+  sessionId: string
+  canvasId: string
+  prompt: string
+  inputImages: string[]  // 按选中顺序排列的图像文件ID
+  aspectRatio?: string
+  provider?: string
+  model?: string
+}
+
+export const composeImages = async (
+  payload: ComposeRequest
+): Promise<DirectEditResponse> => {
+  return directEdit({
+    sessionId: payload.sessionId,
+    canvasId: payload.canvasId,
+    action: 'compose',
+    prompt: payload.prompt,
+    inputImages: payload.inputImages,
+    aspectRatio: payload.aspectRatio ?? '1:1',
+    provider: payload.provider ?? 'agnes',
+    model: payload.model ?? 'agnes-image-2.0-flash',
+  })
+}
+
+// -------------------------------------------------------------------
 // Mockup / 贴纸粘贴
 // -------------------------------------------------------------------
 export interface MockupRequest {
@@ -134,6 +162,7 @@ export interface MockupRequest {
   shadow?: boolean
   cornerRadius?: number
   blendMode?: string
+  curvature?: number
   prompt?: string
 }
 
@@ -145,6 +174,64 @@ export interface MockupResponse {
     image_url: string
   }
   action: string
+}
+
+export interface IcMockupRequest {
+  sessionId: string
+  canvasId: string
+  targetFileId: string
+  designFileId: string
+  x?: number
+  y?: number
+  scale?: number
+  curvature?: number
+  provider?: string
+  model?: string
+  aspectRatio?: string
+  fallbackPil?: boolean
+}
+
+export interface IcMockupResponse {
+  status: string
+  result: {
+    element: ExcalidrawImageElement
+    file: BinaryFileData
+    image_url: string
+  }
+  action: string
+  method: 'ic_lora' | 'pil_fallback'
+}
+
+export const icMockup = async (
+  payload: IcMockupRequest
+): Promise<IcMockupResponse> => {
+  const response = await fetch(`/api/ic_mockup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      session_id: payload.sessionId,
+      canvas_id: payload.canvasId,
+      target_file_id: payload.targetFileId,
+      design_file_id: payload.designFileId,
+      x: payload.x ?? 0.5,
+      y: payload.y ?? 0.5,
+      scale: payload.scale ?? 0.25,
+      curvature: payload.curvature ?? 0,
+      provider: payload.provider ?? 'agnes',
+      model: payload.model ?? 'agnes-image-2.0-flash',
+      aspect_ratio: payload.aspectRatio ?? '16:9',
+      fallback_pil: payload.fallbackPil ?? true,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`IC-LoRA mockup failed: ${errorText}`)
+  }
+
+  return (await response.json()) as IcMockupResponse
 }
 
 export const mockup = async (
@@ -168,6 +255,7 @@ export const mockup = async (
       shadow: payload.shadow ?? true,
       corner_radius: payload.cornerRadius ?? 0,
       blend_mode: payload.blendMode ?? 'auto',
+      curvature: payload.curvature ?? 0,
       prompt: payload.prompt ?? '',
     }),
   })

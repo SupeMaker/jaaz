@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 import requests
 import httpx
 from models.tool_model import ToolInfoJson
@@ -45,7 +45,36 @@ async def get_comfyui_model_list(base_url: str) -> List[str]:
                 return []
     except Exception as e:
         print(f"Error querying ComfyUI: {e}")
-        return []
+        return res
+
+
+@router.post("/test_provider")
+async def test_provider(request: Request) -> Dict[str, str]:
+    """Test connectivity for a single provider configuration."""
+    data = await request.json()
+    provider: str = data.get('provider', '')
+    config: Dict[str, Any] = data.get('config', {})
+    url = config.get('url', '').strip()
+    api_key = config.get('api_key', '').strip()
+
+    if not url:
+        return {"status": "error", "message": "Provider URL is required"}
+
+    try:
+        if provider == 'ollama':
+            response = requests.get(f'{url}/api/tags', timeout=5)
+            response.raise_for_status()
+        else:
+            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            test_url = f'{url.rstrip("/")}/models'
+            response = requests.get(test_url, headers=headers, timeout=10)
+            response.raise_for_status()
+        return {"status": "success", "message": "Connection verified"}
+    except requests.RequestException as e:
+        return {"status": "error", "message": f"Connection failed: {e}"}
+    except Exception as e:
+        return {"status": "error", "message": f"Unexpected error: {e}"}
+
 
 # List all LLM models
 @router.get("/list_models")
@@ -74,6 +103,11 @@ async def get_models() -> list[ModelInfo]:
             continue
 
         provider_config = config[provider]
+
+        # Skip disabled providers
+        if provider_config.get('is_disabled'):
+            continue
+
         provider_url = provider_config.get('url', '').strip()
         provider_api_key = provider_config.get('api_key', '').strip()
 
@@ -109,7 +143,13 @@ async def list_tools() -> list[ToolInfoJson]:
         if tool_info.get('provider') == 'system':
             continue
         provider = tool_info['provider']
-        provider_api_key = config.get(provider, {}).get('api_key', '').strip()
+        provider_config = config.get(provider, {})
+
+        # Skip tools from disabled providers
+        if provider_config.get('is_disabled'):
+            continue
+
+        provider_api_key = provider_config.get('api_key', '').strip()
         if provider != 'comfyui' and not provider_api_key:
             continue
         res.append({
